@@ -1,2 +1,6 @@
-# deep-reinforcement-learning
-My Master's thesis on the generalization of deep reinforcement learning algorithms on combinations of unseen failure modes.
+# Deep Reinforcement Learning in Control
+
+This GitHub repository holds all the code I have written for my 4th Year's Master's project at the University of Cambridge. This project focuses on attempting to find neural network architectures such that the reinforcement learning agent will be able to generalize to unseen failure modes, or a combination of unseen failure modes.
+
+Project Proposal:
+One of the great strengths of deep neural nets, when properly structured, is their ability to generalise. For image recognition it is well understood that a hierarchical convolutional structure is the key. The aim of this project is to investigate appropriate structures for the control of dynamical systems. Specifically, there are many heroic examples where pilots have managed to land badly damaged aircraft with missing or ineffective vital control surfaces. Sadly there are other examples where a means of controlling the aircraft has been demonstrated later but the which the pilots were not able to find in real time. Previous projects have shown that it is possible to train a single RL based controller for a finite number of such failure modes, but the ability to generalise to unseen combinations of failures is highly dependent on the neural network architecture. This is the focus of the project.
