@@ -3,6 +3,7 @@
 
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 class SimpleDiscreteQLearning:
     """
@@ -50,7 +51,7 @@ class SimpleDiscreteQLearning:
                  self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
                  
                  # Setting cost to be 0 at optimal state.
-                 self.q_table([x_limit + 1, x_limit + 1, u_limit + 1, u_limit + 1]) = 0 
+                 self.q_table[x_limit + 1, x_limit + 1, u_limit + 1, u_limit + 1] = 0 
 
 
     def run_one_episode(self):
@@ -60,7 +61,7 @@ class SimpleDiscreteQLearning:
 
         # Exploration step - either following the optimal policy, or exploring randomly
         for k in range(1, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
-            if random.uniform() < self.epsilon:  # exploring with probability epsilon (epsilon greedy)
+            if random.uniform(0, 1) < self.epsilon:  # exploring with probability epsilon (epsilon greedy)
                 self.u[k] = random.randint(-self.u_limit, self.u_limit)  # u(k) will be updated with a random value between -u_limit and u_limit (explore)
             else:
                 # Choose minimum cost action, minimised over all the possible actions (u(k))
@@ -73,7 +74,7 @@ class SimpleDiscreteQLearning:
         # Learning step (greedy, off-policy)
         for k in range(1, self.time_steps):
             # Grabs current count value for current augmented agent state and action, and increment by 1
-            self.number_times_explored([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1]) += 1
+            self.number_times_explored[self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1] += 1
             count = self.number_times_explored([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1])
 
             # Normalization constant; the more the current state is explored, the less impact the new q values contribute (discount factor)
@@ -84,8 +85,8 @@ class SimpleDiscreteQLearning:
             least_cost_action = min(self.q_table([self.x[k+1] + self.x_limit + 1, self.x[k] + self.x_limit + 1, self.u[k] + self.u_limit + 1]))
 
             # Update Q table for the current augmented agent state (containing xk xk-1 uk-1) and current action uk
-            self.q_table([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, 
-                          self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1]) = (1-norm_constant) * current_q_value + norm_constant * cost + least_cost_action
+            self.q_table[self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, 
+                         self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1] = (1-norm_constant) * current_q_value + norm_constant * cost + least_cost_action
     
 
     def run_one_batch(self):
@@ -97,14 +98,40 @@ class SimpleDiscreteQLearning:
         self.u = np.zeros((self.time_steps, 1))
         self.x = np.zeros((self.time_steps + 1, 1))  # As we need to index x[k+1] for the last time step as well
 
-        # Selects a number randomly between -x_limit and x_limit, and places it in x[2].
-        # Starts at 2 as you need the previous x and u values as history buffer, to make it a Markovian process.
-        self.x[2] = random.randint(-self.x_limit, self.x_limit)
+        # Selects a number randomly between -x_limit and x_limit, and places it in x[1].
+        # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
+        self.x[1] = random.randint(-self.x_limit, self.x_limit)
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode()
 
+    
+    def plot_test_episode(self):
+        """Plots time step against the state value, for the current trained policy using the greedy policy."""
 
+        x_values = np.zeros((self.time_steps + 1, 1))
+        u_values = np.zeros((self.time_steps, 1))
+
+        for b in self.possible_b_vector:
+            for a in self.possible_a_vector:
+                # Iterating over all possible combinations of a and b values.
+                # Initializing x and u values.
+                x_values[1] = self.x_limit / 5
+                x_values[0] = 0
+                u_values[0] = 0
+
+                for k in range(1, self.time_steps):
+                    # Choose minimum cost action, minimised over all the possible actions (u(k))
+                    min_cost_index = np.argmin(self.q_table([x_values[k] + self.x_limit + 1, x_values[k-1] + self.x_limit + 1, u_values[k-1] + self.u_limit + 1]))
+                    u_values[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
+
+                    # Basically limits x to x_limit and -x_limit for next state, and updates next state
+                    x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+
+            plt.plot(range(self.time_steps + 1), x_values)
+
+        plt.show()
+        
     def run_multiple_batches(self):
         """Runs the specified number of batches, each batch consisting of multiple episodes."""
 
@@ -112,3 +139,12 @@ class SimpleDiscreteQLearning:
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy
             self.run_one_batch()
+
+            # Create a plot for every 10 batches
+            if i % 10 == 0:
+                self.plot_test_episode()
+
+
+if __name__ == "__main__":
+    algorithm = SimpleDiscreteQLearning()
+    algorithm.run_multiple_batches()
