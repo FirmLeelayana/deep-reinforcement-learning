@@ -51,7 +51,7 @@ class SimpleDiscreteQLearning:
                  self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
                  
                  # Setting cost to be 0 at optimal state.
-                 self.q_table[x_limit + 1, x_limit + 1, u_limit + 1, u_limit + 1] = 0 
+                 self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
 
 
     def run_one_episode(self):
@@ -65,7 +65,7 @@ class SimpleDiscreteQLearning:
                 self.u[k] = random.randint(-self.u_limit, self.u_limit)  # u(k) will be updated with a random value between -u_limit and u_limit (explore)
             else:
                 # Choose minimum cost action, minimised over all the possible actions (u(k))
-                min_cost_index = np.argmin(self.q_table([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1]))
+                min_cost_index = np.argmin(self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit)])
                 self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
@@ -74,19 +74,19 @@ class SimpleDiscreteQLearning:
         # Learning step (greedy, off-policy)
         for k in range(1, self.time_steps):
             # Grabs current count value for current augmented agent state and action, and increment by 1
-            self.number_times_explored[self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1] += 1
-            count = self.number_times_explored([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1])
+            self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
+            count = self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
 
             # Normalization constant; the more the current state is explored, the less impact the new q values contribute (discount factor)
             norm_constant = (1/count)
 
-            current_q_value = self.q_table([self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1])
+            current_q_value = self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
             cost = self.x[k]**2 + self.u[k]**2
-            least_cost_action = min(self.q_table([self.x[k+1] + self.x_limit + 1, self.x[k] + self.x_limit + 1, self.u[k] + self.u_limit + 1]))
+            least_cost_action = min(self.q_table[int(self.x[k+1] + self.x_limit), int(self.x[k] + self.x_limit), int(self.u[k] + self.u_limit)])
 
             # Update Q table for the current augmented agent state (containing xk xk-1 uk-1) and current action uk
-            self.q_table[self.x[k] + self.x_limit + 1, self.x[k-1] + self.x_limit + 1, 
-                         self.u[k-1] + self.u_limit + 1, self.u[k] + self.u_limit + 1] = (1-norm_constant) * current_q_value + norm_constant * cost + least_cost_action
+            self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), 
+                         int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
     
 
     def run_one_batch(self):
@@ -95,8 +95,8 @@ class SimpleDiscreteQLearning:
         self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value
         self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value (failure mode)
 
-        self.u = np.zeros((self.time_steps, 1))
-        self.x = np.zeros((self.time_steps + 1, 1))  # As we need to index x[k+1] for the last time step as well
+        self.u = np.zeros(self.time_steps)
+        self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
 
         # Selects a number randomly between -x_limit and x_limit, and places it in x[1].
         # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
@@ -112,6 +112,8 @@ class SimpleDiscreteQLearning:
         x_values = np.zeros((self.time_steps + 1, 1))
         u_values = np.zeros((self.time_steps, 1))
 
+        plt.clf()  # clears the current figure
+
         for b in self.possible_b_vector:
             for a in self.possible_a_vector:
                 # Iterating over all possible combinations of a and b values.
@@ -122,17 +124,20 @@ class SimpleDiscreteQLearning:
 
                 for k in range(1, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table([x_values[k] + self.x_limit + 1, x_values[k-1] + self.x_limit + 1, u_values[k-1] + self.u_limit + 1]))
-                    u_values[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
+                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
+                    u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Basically limits x to x_limit and -x_limit for next state, and updates next state
                     x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+            
+                plt.plot(range(self.time_steps + 1), x_values)  # plot the given trajectory for a single combination of 'a' and 'b' value
 
-            plt.plot(range(self.time_steps + 1), x_values)
-
+        plt.ion()  # turn on interactive mode
+        plt.pause(0.01)  # allow time for GUI to load
         plt.show()
         
-    def run_multiple_batches(self):
+
+    def run_multiple_batches(self, batch_number_until_plot=100):
         """Runs the specified number of batches, each batch consisting of multiple episodes."""
 
         for i in range(self.number_of_batches):
@@ -140,11 +145,16 @@ class SimpleDiscreteQLearning:
                 self.epsilon = 0.5  # switches to epsilon greedy policy
             self.run_one_batch()
 
-            # Create a plot for every 10 batches
-            if i % 10 == 0:
+            # Create a plot for every x batches
+            if i % batch_number_until_plot == 0:
                 self.plot_test_episode()
+                # Print batch number
+                print(f"Current batch number: {i}")
 
 
 if __name__ == "__main__":
-    algorithm = SimpleDiscreteQLearning()
-    algorithm.run_multiple_batches()
+    # Will plot the trajectories of the 4 different 'a' and 'b' combinations at every 
+    # batch_number_until_plot batches, up to maximum of number_of_batches. Will also
+    # print out the current batch number to terminal.
+    algorithm = SimpleDiscreteQLearning(number_of_batches=5000)
+    algorithm.run_multiple_batches(batch_number_until_plot=100)
