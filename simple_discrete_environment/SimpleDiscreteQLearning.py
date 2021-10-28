@@ -147,7 +147,7 @@ class SimpleDiscreteQLearning:
                 # Plots either trajectory or error over time steps
                 if option == "trajectory":
                     plt.plot(range(self.time_steps + 1), x_values)  # plot the given trajectory for a single combination of 'a' and 'b' value
-                elif option == "error":
+                elif option == "cost":
                     plt.plot(range(self.time_steps), self.cost[combination_index])  # plot the cost for the trajectory
                 
                 # Increment combination index by 1
@@ -186,5 +186,5 @@ if __name__ == "__main__":
 
     # Plot trajectory graph
     agent.run_multiple_batches(batch_number_until_plot=10, option = 'trajectory')
-    # Plot error graph
-    agent.run_multiple_batches(batch_number_until_plot=10, option = 'error')
+    # Plot cost graph
+    agent.run_multiple_batches(batch_number_until_plot=10, option = 'cost')
