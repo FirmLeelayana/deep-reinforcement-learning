@@ -106,11 +106,22 @@ class SimpleDiscreteQLearning:
             self.run_one_episode()
 
     
-    def plot_test_episode(self):
-        """Plots time step against the state value, for the current trained policy using the greedy policy."""
+    def plot_test_episode(self, option='trajectory'):
+        """
+        Plots time step against the state value, for the current trained policy.
+        Each single test episode will have it's own cost matrix, and it's own trajectory plot for all the different combinations.
 
-        x_values = np.zeros((self.time_steps + 1, 1))
-        u_values = np.zeros((self.time_steps, 1))
+        option = string, represents which plot we want to see.
+        """
+
+        # Initialize cost matrix for each possible combination at each time step
+        total_number_combinations = len(self.possible_a_vector) + len(self.possible_b_vector)
+        self.cost = np.zeros((total_number_combinations, self.time_steps))
+        combination_index = 0  # represents current combination index
+        
+        # Initialize x and u vectors over the time steps
+        x_values = np.zeros(self.time_steps + 1)
+        u_values = np.zeros(self.time_steps)
 
         plt.clf()  # clears the current figure
 
@@ -118,7 +129,7 @@ class SimpleDiscreteQLearning:
             for a in self.possible_a_vector:
                 # Iterating over all possible combinations of a and b values.
                 # Initializing x and u values.
-                x_values[1] = self.x_limit / 5
+                x_values[1] = self.x_limit / 5  # testing agent on a step impulse for example
                 x_values[0] = 0
                 u_values[0] = 0
 
@@ -127,34 +138,53 @@ class SimpleDiscreteQLearning:
                     min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
+                    # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
+                    self.cost[combination_index][k] = x_values[k]**2 + u_values[k]**2
+
                     # Basically limits x to x_limit and -x_limit for next state, and updates next state
                     x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
-            
-                plt.plot(range(self.time_steps + 1), x_values)  # plot the given trajectory for a single combination of 'a' and 'b' value
+
+                # Plots either trajectory or error over time steps
+                if option == "trajectory":
+                    plt.plot(range(self.time_steps + 1), x_values)  # plot the given trajectory for a single combination of 'a' and 'b' value
+                elif option == "error":
+                    plt.plot(range(self.time_steps), self.cost[combination_index])  # plot the cost for the trajectory
+                
+                # Increment combination index by 1
+                combination_index += 1
 
         plt.ion()  # turn on interactive mode
         plt.pause(0.01)  # allow time for GUI to load
         plt.show()
         
 
-    def run_multiple_batches(self, batch_number_until_plot=100):
+    def run_multiple_batches(self, batch_number_until_plot=100, option='trajectory'):
         """Runs the specified number of batches, each batch consisting of multiple episodes."""
 
         for i in range(self.number_of_batches):
             if i > 10:
-                self.epsilon = 0.5  # switches to epsilon greedy policy
+                self.epsilon = 0.5  # switches to epsilon greedy policy, want it to explore alot
             self.run_one_batch()
 
             # Create a plot for every x batches
             if i % batch_number_until_plot == 0:
-                self.plot_test_episode()
-                # Print batch number
-                print(f"Current batch number: {i}")
+                self.plot_test_episode(option)
+                # Print batch number and cost vector (over all combinations)
+                print(f"Current batch number: {i}, average cost per trajectory of {self.cost.mean(axis=1)}, overall average cost: {self.cost.mean()}")
 
 
 if __name__ == "__main__":
-    # Will plot the trajectories of the 4 different 'a' and 'b' combinations at every 
+    # Will plot the trajectories/error graphs of the 4 different 'a' and 'b' combinations at every 
     # batch_number_until_plot batches, up to maximum of number_of_batches. Will also
-    # print out the current batch number to terminal.
-    algorithm = SimpleDiscreteQLearning(number_of_batches=5000)
-    algorithm.run_multiple_batches(batch_number_until_plot=100)
+    # print out the current batch number to terminal, as well as average cost per trajectory
+    # and overall average cost.
+
+    agent = SimpleDiscreteQLearning(number_of_batches=5000)
+
+    # Fix random seed
+    random.seed(1000)
+
+    # Plot trajectory graph
+    agent.run_multiple_batches(batch_number_until_plot=10, option = 'trajectory')
+    # Plot error graph
+    agent.run_multiple_batches(batch_number_until_plot=10, option = 'error')
