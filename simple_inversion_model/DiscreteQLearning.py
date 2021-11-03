@@ -5,7 +5,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-class SimpleDiscreteQLearning:
+class DiscreteQLearning:
     """
     This class implements the tabular epsilon greedy q-learning algorithm to solve a simple environment model which has the state space equation:
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     # print out the current batch number to terminal, as well as average cost per trajectory
     # and overall average cost.
 
-    agent = SimpleDiscreteQLearning(number_of_batches=5000)
+    agent = DiscreteQLearning(number_of_batches=5000)
 
     # Fix random seed
     random.seed(1000)
