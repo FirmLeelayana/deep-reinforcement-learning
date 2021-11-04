@@ -94,7 +94,7 @@ class CreateEvaluationMetrics:
         return np.mean(self.cost_matrix)
 
 
-    def create_evaluation_table(self, number_batches=1000, episodes_per_batch=100, seed_range=[x for x in range(100)]):
+    def create_evaluation_table(self, number_batches=5000, episodes_per_batch=100, seed_range=[x for x in range(100)]):
         """
         Each algorithm is trained for a fixed number of batches (number_batches) and episodes per batch (episodes_per_batch), and 
         then the current trained algorithm is tested against the above evaluation guidelines. 
@@ -138,14 +138,15 @@ class CreateEvaluationMetrics:
         combined_metrics = [metric_one, metric_two, metric_three]
 
         for metric in combined_metrics:  # iterating over the three metrics
+            mean_value = statistics.mean(value for value in metric if value is not None)
             try:
-                mean_value = statistics.mean(value for value in metric if value is not None)
                 variance_value = statistics.variance(value for value in metric if value is not None)
 
-                mean_vector.append(mean_value)
-                variance_vector.append(variance_value)
             # Error handling for the case where all values are None in one of the metric vectors
-            except statistics.StatisticsError('variance requires at least two data points'):
-                variance_vector.append(None)
+            except statistics.StatisticsError:
+                variance_value = None
+
+            mean_vector.append(mean_value)
+            variance_vector.append(variance_value)
 
         return mean_vector, variance_vector
