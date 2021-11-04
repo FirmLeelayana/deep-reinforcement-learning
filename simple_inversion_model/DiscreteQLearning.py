@@ -1,4 +1,5 @@
-# This file implements a simple environment model, with both discrete action and state spaces, where only a single mode of failure exists.
+# This file implements the 1st solution, a simple tabular q learning algorithm to the simple inversion state space model, 
+# with both discrete action and state spaces, where only a single mode of failure exists.
 # This code has been ported from MATLAB into Python, with full credits to Prof. Glenn Vinnicombe for the initial implementation.
 
 import numpy as np
@@ -16,7 +17,7 @@ class DiscreteQLearning:
     from a nominal mode to a failure mode. The ultimate aim of the q-learning algorithm is to learn an optimal q-table/policy such that
     it would be able to handle any variations in a or b.
 
-    Inputs:
+    Initialization variables:
     x_limit = int, the limit as to which the state value can go up to. Default = 20.
     u_limit = int, the limit as to which the input value can go up to. Default = 20.
     time_steps = int, the number of time steps per episode. Default = 10.
@@ -53,10 +54,18 @@ class DiscreteQLearning:
                  # Setting cost to be 0 at optimal state.
                  self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
 
+    
+    def reset_agent(self):
+        """Resets the q table/agent to its default, untrained state."""
 
-    def run_one_episode(self):
+        self.q_table = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 100)
+        self.number_times_explored = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 0)
+        self.q_table[self.x_limit, self.x_limit, self.u_limit, self.u_limit] = 0
+
+
+    def run_one_episode_and_train(self):
         """
-        Runs a single episode in the q-learning algorithm.
+        Trains the agent over a single episode.
         """
 
         # Exploration step - either following the optimal policy, or exploring randomly
@@ -89,8 +98,8 @@ class DiscreteQLearning:
                          int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
     
 
-    def run_one_batch(self):
-        """Runs a single batch, comprising of a number of episodes."""
+    def run_one_batch_and_train(self):
+        """Runs a single batch, comprising of a number of episodes, training the agent."""
 
         self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value
         self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value (failure mode)
@@ -103,9 +112,69 @@ class DiscreteQLearning:
         self.x[1] = random.randint(-self.x_limit, self.x_limit)
 
         for i in range(self.number_of_episodes_per_batch):
-            self.run_one_episode()
+            self.run_one_episode_and_train()
 
     
+    def run_multiple_batches_and_train(self):
+        """
+        Trains agent over the specified number of batches, each batch consisting of multiple episodes.
+        """
+
+        for i in range(self.number_of_batches):
+            if i > 10:
+                self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
+            self.run_one_batch_and_train()
+
+
+    def simulate_single_test_epsiode(self):
+        """
+        Runs a single test episode, under the current trained policy (the current q table).
+        Returns:
+        1. A cost matrix, of size (number_of_combinations, self.time_steps), representing cost at each time step,
+           for each trajectory/sample, where each sample has a unique 'a' and 'b' value combination.
+        2. A state matrix, of size (number_of_combinations, self.time_steps), representing state at each time step,
+           for each trajectory/sample, where each sample has a unique 'a' and 'b' value combination.
+        To be used for creating evaluation metrics for the agent.
+        """
+
+        # Initialize cost and state matrix for each possible combination at each time step
+        total_number_combinations = len(self.possible_a_vector) + len(self.possible_b_vector)
+        cost_matrix = np.zeros((total_number_combinations, self.time_steps))
+        state_matrix = np.zeros((total_number_combinations, self.time_steps))
+        combination_index = 0  # represents current combination index
+        
+        # Initialize x and u vectors over the time steps
+        x_values = np.zeros(self.time_steps + 1)
+        u_values = np.zeros(self.time_steps)
+
+        # Iterating over all possible combinations of a and b values.
+        for b in self.possible_b_vector:
+            for a in self.possible_a_vector:
+                # Initializing x and u values.
+                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[0] = 0
+                u_values[0] = 0
+
+                for k in range(1, self.time_steps):
+                    # Choose minimum cost action, minimised over all the possible actions (u(k))
+                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
+                    u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
+
+                    # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
+                    cost_matrix[combination_index][k] = x_values[k]**2 + u_values[k]**2
+
+                    # Stores state at each time step for the particular 'a' and 'b' combination
+                    cost_matrix[combination_index][k] = x_values[k]
+
+                    # Basically limits x to x_limit and -x_limit for next state, and updates next state
+                    x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+                
+                # Increment combination index by 1
+                combination_index += 1
+
+        return cost_matrix, state_matrix
+
+
     def plot_test_episode(self, option='trajectory'):
         """
         Plots time step against the state value, for the current trained policy.
@@ -125,11 +194,11 @@ class DiscreteQLearning:
 
         plt.clf()  # clears the current figure
 
+        # Iterating over all possible combinations of a and b values.
         for b in self.possible_b_vector:
             for a in self.possible_a_vector:
-                # Iterating over all possible combinations of a and b values.
                 # Initializing x and u values.
-                x_values[1] = self.x_limit / 5  # testing agent on a step impulse for example
+                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
                 x_values[0] = 0
                 u_values[0] = 0
 
@@ -158,13 +227,16 @@ class DiscreteQLearning:
         plt.show()
         
 
-    def run_multiple_batches(self, batch_number_until_plot=100, option='trajectory'):
-        """Runs the specified number of batches, each batch consisting of multiple episodes."""
+    def run_multiple_batches_and_plot(self, batch_number_until_plot=100, option='trajectory'):
+        """
+        Trains agent over the specified number of batches, each batch consisting of multiple episodes, and produces a plot
+        showing either trajectory or cost of a single test episode, at specified (batch_number_until_plot) batch intervals.
+        """
 
         for i in range(self.number_of_batches):
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, want it to explore alot
-            self.run_one_batch()
+            self.run_one_batch_and_train()
 
             # Create a plot for every x batches
             if i % batch_number_until_plot == 0:
@@ -179,12 +251,16 @@ if __name__ == "__main__":
     # print out the current batch number to terminal, as well as average cost per trajectory
     # and overall average cost.
 
-    agent = DiscreteQLearning(number_of_batches=5000)
+    # Initialize the number of batches and episodes per batch variables (for training)
+    agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=5000)
 
     # Fix random seed
     random.seed(1000)
 
-    # Plot trajectory graph
-    agent.run_multiple_batches(batch_number_until_plot=10, option = 'trajectory')
-    # Plot cost graph
-    agent.run_multiple_batches(batch_number_until_plot=10, option = 'cost')
+    # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
+    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
+    agent.reset_agent()  # Reset agent
+
+    # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
+    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'cost')
+    agent.reset_agent()  # Reset agent
