@@ -13,7 +13,7 @@ from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluat
 def main():
     agent = DiscreteQLearning()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
-    mean_vector, variance_vector = evaluation.create_evaluation_table(number_batches=5000, episodes_per_batch=100, seed_range=[x for x in range(5)])
+    mean_vector, variance_vector = evaluation.create_evaluation_table(number_batches=1000, episodes_per_batch=100, seed_range=[x for x in range(5)])
 
     # Output mean vector and covariance vector
     print(mean_vector, variance_vector)
