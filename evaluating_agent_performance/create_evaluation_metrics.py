@@ -142,6 +142,9 @@ class CreateEvaluationMetrics:
             metric_two.append(self.count_time_steps_for_convergence())
             metric_three.append(self.average_cost_per_episode())
 
+            # Print current iteration number (to help see how long it will take)
+            print(f'{seed_number}: Calculating...')
+
         # Compute the mean and variance of each evaluation metric, and append to vector
         mean_vector = []
         variance_vector = []
