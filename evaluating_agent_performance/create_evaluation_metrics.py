@@ -23,7 +23,8 @@ class CreateEvaluationMetrics:
        last episode of the training. This is averaged over all samples.
 
     Each algorithm is trained for a fixed number of episodes, and then the current trained algorithm is tested against the 
-    above evaluation guidelines.
+    above evaluation guidelines; this is repeated twice, once on the trained failure mode combinations, and another on the unseen failure
+    mode combinations - this is to see how well the agent does on trained failure modes, and how well it generalises.
 
     This process is then repeated for a range of random seeds, which in itself has a fixed range. 
     This is to ensure that we get as unbiased an estimate as possible of the algorithm’s evaluation metrics, as there is some stochasticity 
@@ -71,16 +72,17 @@ class CreateEvaluationMetrics:
         for row in self.state_matrix:  # iterate over all trajectories
             current_time_step = 1  # reset counter
             if row[-1] == 0:  # only for states that converge
-                 for state_at_single_time_step in row[1:]:  # ignore x[0]
+                for state_at_single_time_step in row[1:]:  # ignore x[0]
                     if state_at_single_time_step == 0:
                         time_steps_for_convergence.append(current_time_step)
+                        break
                     else:
                         pass
                     current_time_step += 1
             else:
                 pass
         
-        if time_steps_for_convergence is None:
+        if len(time_steps_for_convergence) == 0:
             average_number_of_time_steps_for_convergence = None
         else:
             average_number_of_time_steps_for_convergence = sum(time_steps_for_convergence) / len(time_steps_for_convergence)
@@ -111,6 +113,11 @@ class CreateEvaluationMetrics:
         self.agent.number_of_batches = number_batches
         self.agent.number_of_episodes_per_batch = episodes_per_batch
 
+        # Initialize lists for each metric
+        metric_one = []
+        metric_two = []
+        metric_three = []
+
         # Repeat for each seed in the seed range
         for seed_number in seed_range:
             # Set seed
@@ -121,11 +128,6 @@ class CreateEvaluationMetrics:
 
             # Simulate a single test episode after training
             self.calculate_cost_and_state_for_single_test_episode()
-
-            # Initialize lists for each metric
-            metric_one = []
-            metric_two = []
-            metric_three = []
 
             # Compute each metric, and append to list
             metric_one.append(self.count_fraction_of_samples_that_converge_per_epsiode())
@@ -138,11 +140,15 @@ class CreateEvaluationMetrics:
         combined_metrics = [metric_one, metric_two, metric_three]
 
         for metric in combined_metrics:  # iterating over the three metrics
-            mean_value = statistics.mean(value for value in metric if value is not None)
+            try:
+                mean_value = statistics.mean(value for value in metric if value is not None)
+            # Error handling for the case where all values are None over all seeds in one of the metric vectors
+            except statistics.StatisticsError:
+                mean_value = None
+
             try:
                 variance_value = statistics.variance(value for value in metric if value is not None)
-
-            # Error handling for the case where all values are None in one of the metric vectors
+            # Error handling for the case where all values are None over all seeds in one of the metric vectors
             except statistics.StatisticsError:
                 variance_value = None
 

@@ -164,11 +164,11 @@ class DiscreteQLearning:
                     cost_matrix[combination_index][k] = x_values[k]**2 + u_values[k]**2
 
                     # Stores state at each time step for the particular 'a' and 'b' combination
-                    cost_matrix[combination_index][k] = x_values[k]
+                    state_matrix[combination_index][k] = x_values[k]
 
                     # Basically limits x to x_limit and -x_limit for next state, and updates next state
                     x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
-                
+
                 # Increment combination index by 1
                 combination_index += 1
 
@@ -259,8 +259,10 @@ if __name__ == "__main__":
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
+    plt.pause(5)  # Pause the final plot for 5 seconds
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'cost')
+    plt.pause(5)  # Pause the final plot for 5 seconds
     agent.reset_agent()  # Reset agent
