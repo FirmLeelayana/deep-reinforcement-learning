@@ -26,13 +26,14 @@ class DiscreteQLearning:
     possible_a_vector = array of ints, represents the possible values that A could take. Default = [1, 3]
     number_of_episodes_per_batch = int, number of episodes per training batch. Default = 100.
     number_of_batches = int, number of batches in total. Each batch will train the same Q table, but after a batch, the plot of how well the policy does
-                        will be created. Default = 10,000.
+                        will be created. Default = 5000.
+    unseen_a_vector = array of unseen failure modes in a.
     """
 
 
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[1,3], 
-                 number_of_episodes_per_batch=100, number_of_batches=10000,
+                 number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[2]):
                  
                  self.x_limit = x_limit
@@ -286,7 +287,7 @@ if __name__ == "__main__":
     # Basically shows the trajectory plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
-    print(agent.number_times_explored)  # exploring the q-table space that has been touched
+    print(np.count_nonzero(agent.number_times_explored))  # exploring the q-table space that has been touched
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
