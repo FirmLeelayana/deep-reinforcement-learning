@@ -13,10 +13,24 @@ from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluat
 def main():
     agent = DiscreteQLearning()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
-    mean_vector, variance_vector = evaluation.create_evaluation_table(number_batches=3000, episodes_per_batch=100, seed_range=[x for x in range(20)])
 
+    # Evaluate metrics on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(10)], test_type='overall')
     # Output mean vector and covariance vector
-    print(f'Mean Vector: {mean_vector}, Variance Vector: {variance_vector}')
+    print(f'Overall -> Mean Vector: {mean_vector}, Variance Vector: {variance_vector}')
+
+    # Evaluate metrics on a single test epsiode, which contains samples of only the trained-on/seen failure modes
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(10)], test_type='seen')
+    # Output mean vector and covariance vector
+    print(f'Seen -> Mean Vector: {mean_vector}, Variance Vector: {variance_vector}')
+
+    # Evaluate metrics on a single test epsiode, which contains samples of only the unseen failure modes.
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(10)], test_type='unseen')
+    # Output mean vector and covariance vector
+    print(f'Unseen -> Mean Vector: {mean_vector}, Variance Vector: {variance_vector}')
 
 
 if __name__ == "__main__":

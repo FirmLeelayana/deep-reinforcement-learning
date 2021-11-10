@@ -23,7 +23,7 @@ class DiscreteQLearning:
     time_steps = int, the number of time steps per episode. Default = 10.
     epsilon = int, the greedy epsilon value the q-learning will follow. Default = 1.
     possible_b_vector = array of ints, represents the possible gains that B could take. Default = [1, -1]
-    possible_a_vector = array of ints, represents the possible values that A could take. Default = [1, 2]
+    possible_a_vector = array of ints, represents the possible values that A could take. Default = [1, 3]
     number_of_episodes_per_batch = int, number of episodes per training batch. Default = 100.
     number_of_batches = int, number of batches in total. Each batch will train the same Q table, but after a batch, the plot of how well the policy does
                         will be created. Default = 10,000.
@@ -31,8 +31,9 @@ class DiscreteQLearning:
 
 
     def __init__(self, x_limit=20, u_limit = 20, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1,-1], possible_a_vector=[1,2], 
-                 number_of_episodes_per_batch=100, number_of_batches=10000):
+                 possible_b_vector=[1,-1], possible_a_vector=[1,3], 
+                 number_of_episodes_per_batch=100, number_of_batches=10000,
+                 unseen_a_vector=[2]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -40,6 +41,7 @@ class DiscreteQLearning:
                  self.epsilon = epsilon
                  self.possible_b_vector = possible_b_vector
                  self.possible_a_vector = possible_a_vector
+                 self.unseen_a_vector = unseen_a_vector
                  self.number_of_episodes_per_batch = number_of_episodes_per_batch
                  self.number_of_batches = number_of_batches
 
@@ -101,8 +103,8 @@ class DiscreteQLearning:
     def run_one_batch_and_train(self):
         """Runs a single batch, comprising of a number of episodes, training the agent."""
 
-        self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value
-        self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value (failure mode)
+        self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value (failure mode)
+        self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value
 
         self.u = np.zeros(self.time_steps)
         self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
@@ -126,9 +128,15 @@ class DiscreteQLearning:
             self.run_one_batch_and_train()
 
 
-    def simulate_single_test_epsiode(self):
+    def simulate_single_test_epsiode(self, test_type='overall'):
         """
         Runs a single test episode, under the current trained policy (the current q table).
+
+        Input:
+        1. test_type, a string -> corresponds to which combinations of a and b values we want to test the agent on.
+                                  overall = all combinations
+                                  unseen = only unseen combinations
+                                  seen = only on trained-on combinations of failure modes
         Returns:
         1. A cost matrix, of size (number_of_combinations, self.time_steps), representing cost at each time step,
            for each trajectory/sample, where each sample has a unique 'a' and 'b' value combination.
@@ -137,8 +145,20 @@ class DiscreteQLearning:
         To be used for creating evaluation metrics for the agent.
         """
 
-        # Initialize cost and state matrix for each possible combination at each time step
-        total_number_combinations = len(self.possible_a_vector) + len(self.possible_b_vector)
+        # Initializes the specified possible combination of a and b values.
+        if test_type == 'overall':
+            a_vector = self.possible_a_vector.copy()
+            a_vector.extend(self.unseen_a_vector)
+            a_vector.sort()
+        elif test_type == 'seen':
+            a_vector = self.possible_a_vector
+        elif test_type == 'unseen':
+            a_vector = self.unseen_a_vector
+
+        total_number_combinations = len(a_vector) * len(self.possible_b_vector)
+        self.total_number_combinations_test_episode = total_number_combinations  # store total test combinations for use in evaluation
+        
+        # Initialize cost and state matrix for each possible combination at each time step.
         cost_matrix = np.zeros((total_number_combinations, self.time_steps))
         state_matrix = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
@@ -149,7 +169,7 @@ class DiscreteQLearning:
 
         # Iterating over all possible combinations of a and b values.
         for b in self.possible_b_vector:
-            for a in self.possible_a_vector:
+            for a in a_vector:
                 # Initializing x and u values.
                 x_values[1] = self.x_limit / 5  # testing agent on a step impulse
                 x_values[0] = 0

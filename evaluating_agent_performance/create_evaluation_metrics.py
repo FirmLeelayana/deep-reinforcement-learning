@@ -10,9 +10,10 @@ class CreateEvaluationMetrics:
     This class takes in an agent object, and evaluates it's performance, as specified in the 'Evaluating performance for RL algorithms'
     document. The main 3 quantitative measures of performance will be calculated. The main method the agent class must implement is:
 
-    simulate_single_test_epsiode(self): Runs a single test episode, under the current trained policy.
-                                        Returns a cost and state matrix for each possible combination (one sample trajectory for a given 'a' 
-                                        and 'b') at each time step. Size of each matrix is number_of_combinations * self.time_steps.
+    simulate_single_test_epsiode(self, test_type): Runs a single test episode, under the current trained policy.
+                                                   Returns a cost and state matrix for each possible combination (one sample trajectory for a given 'a' 
+                                                   and 'b') at each time step. Size of each matrix is number_of_combinations * self.time_steps.
+                                                   Input is the type of test you want it to evaluate - overall, unseen, or seen.
 
     The 3 quantitative measures of performance to be calculated are:
     1. Count the total fraction of samples that converge to the optimal policy, for a single test episode that is run AFTER the 
@@ -41,17 +42,17 @@ class CreateEvaluationMetrics:
         self.state_matrix = []
 
 
-    def calculate_cost_and_state_for_single_test_episode(self):
+    def calculate_cost_and_state_for_single_test_episode(self, test_type='overall'):
         """Computes the cost and state matrix for a single test epsiode."""
 
-        self.cost_matrix, self.state_matrix = self.agent.simulate_single_test_epsiode()
+        self.cost_matrix, self.state_matrix = self.agent.simulate_single_test_epsiode(test_type)
 
 
     def count_fraction_of_samples_that_converge_per_epsiode(self):
         """Counts the total fraction of samples that converge to the optimal policy, for a single test episode."""
         
         total_trajectories_that_converged = 0
-        total_combinations_of_trajectories = len(self.agent.possible_a_vector) + len(self.agent.possible_b_vector)
+        total_combinations_of_trajectories = self.agent.total_number_combinations_test_episode
 
         for row in self.state_matrix:
             if row[-1] == 0:
@@ -96,8 +97,11 @@ class CreateEvaluationMetrics:
         return np.mean(self.cost_matrix)
 
 
-    def create_evaluation_table(self, number_batches=5000, episodes_per_batch=100, seed_range=[x for x in range(100)]):
+    def create_evaluation_table_overall(self, number_batches=5000, episodes_per_batch=100, seed_range=[x for x in range(100)], test_type='overall'):
         """
+        This creates an evaluation table corresponding to a test episode which involves all possible combinations of a and 
+        b values - i.e. includes both trained-on and unseen failure modes.
+
         Each algorithm is trained for a fixed number of batches (number_batches) and episodes per batch (episodes_per_batch), and 
         then the current trained algorithm is tested against the above evaluation guidelines. 
         
@@ -126,8 +130,8 @@ class CreateEvaluationMetrics:
             # Trains the agent as specified
             self.agent.run_multiple_batches_and_train()
 
-            # Simulate a single test episode after training
-            self.calculate_cost_and_state_for_single_test_episode()
+            # Simulate a single test episode after training - on a set of failure modes
+            self.calculate_cost_and_state_for_single_test_episode(test_type)
 
             # Compute each metric, and append to list
             metric_one.append(self.count_fraction_of_samples_that_converge_per_epsiode())
