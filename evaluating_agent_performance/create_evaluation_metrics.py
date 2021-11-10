@@ -113,6 +113,9 @@ class CreateEvaluationMetrics:
         evaluation table.
         """
 
+        # Reset agent
+        self.agent.reset_agent()
+        
         # Initialize the training parameters
         self.agent.number_of_batches = number_batches
         self.agent.number_of_episodes_per_batch = episodes_per_batch

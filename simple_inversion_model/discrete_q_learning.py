@@ -30,7 +30,7 @@ class DiscreteQLearning:
     """
 
 
-    def __init__(self, x_limit=20, u_limit = 20, time_steps=10, epsilon=1, 
+    def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[1,3], 
                  number_of_episodes_per_batch=100, number_of_batches=10000,
                  unseen_a_vector=[2]):
@@ -47,10 +47,10 @@ class DiscreteQLearning:
 
                  # Creating a 4D matrix for the Q table. Dimensions for: x(k-1), u(k-1), x(k), against all possible u(k) values.
                  # The three initial dimensions represent the augmented state of the system required to make it Markovian.
-                 # We initialize Q values to 100, with the Q matrix indicating cost. There are 2*x_limit + 1 overall possible
+                 # We randomly initialize Q matrix (values between 0, 1) with the Q matrix indicating cost. There are 2*x_limit + 1 overall possible
                  # discrete states per each state, as we are going from negative x_limit to positive x_limit range. Same applies
                  # to the number of discrete input states possible. 
-                 self.q_table = np.full((2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 100)
+                 self.q_table = np.random.rand(2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1)
                  self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
                  
                  # Setting cost to be 0 at optimal state.
@@ -60,7 +60,7 @@ class DiscreteQLearning:
     def reset_agent(self):
         """Resets the q table/agent to its default, untrained state."""
 
-        self.q_table = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 100)
+        self.q_table = np.random.rand(2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1)
         self.number_times_explored = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 0)
         self.q_table[self.x_limit, self.x_limit, self.u_limit, self.u_limit] = 0
 
@@ -235,13 +235,14 @@ class DiscreteQLearning:
 
                 # Plots either trajectory or error over time steps
                 if option == "trajectory":
-                    plt.plot(range(self.time_steps + 1), x_values)  # plot the given trajectory for a single combination of 'a' and 'b' value
+                    plt.plot(range(self.time_steps + 1), x_values, label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
                 elif option == "cost":
-                    plt.plot(range(self.time_steps), self.cost[combination_index])  # plot the cost for the trajectory
+                    plt.plot(range(self.time_steps), self.cost[combination_index], label=f'a = {a}, b = {b}')  # plot the cost for the trajectory
                 
                 # Increment combination index by 1
                 combination_index += 1
 
+        plt.legend(loc="upper left")  # add a legend
         plt.ion()  # turn on interactive mode
         plt.pause(0.01)  # allow time for GUI to load
         plt.show()
@@ -278,11 +279,13 @@ if __name__ == "__main__":
     random.seed(1000)
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
+    # Basically shows the trajectory plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
+    # Basically shows the cost plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'cost')
     plt.pause(5)  # Pause the final plot for 5 seconds
     agent.reset_agent()  # Reset agent
