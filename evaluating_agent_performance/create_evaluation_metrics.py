@@ -126,6 +126,9 @@ class CreateEvaluationMetrics:
         metric_two = []
         metric_three = []
 
+        # Initialize index number
+        index_number = 1
+
         # Repeat for each seed in the seed range
         for seed_number in seed_range:
             # Set seed
@@ -143,7 +146,10 @@ class CreateEvaluationMetrics:
             metric_three.append(self.average_cost_per_episode())
 
             # Print current iteration number (to help see how long it will take)
-            print(f'{seed_number}: Calculating...')
+            print(f'{index_number} out of {len(seed_range)}: Calculating...')
+
+            # Iterate index number
+            index_number += 1
 
         # Compute the mean and variance of each evaluation metric, and append to vector
         mean_vector = []
