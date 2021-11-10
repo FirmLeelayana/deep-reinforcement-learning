@@ -4,6 +4,7 @@
 import numpy as np
 import random
 import statistics
+import matplotlib.pyplot as plt
 
 class CreateEvaluationMetrics:
     """
@@ -97,7 +98,7 @@ class CreateEvaluationMetrics:
         return np.mean(self.cost_matrix)
 
 
-    def create_evaluation_table_overall(self, number_batches=5000, episodes_per_batch=100, seed_range=[x for x in range(100)], test_type='overall'):
+    def create_evaluation_table_overall(self, number_batches=2500, episodes_per_batch=100, seed_range=[x for x in range(10)], test_type='overall'):
         """
         This creates an evaluation table corresponding to a test episode which involves all possible combinations of a and 
         b values - i.e. includes both trained-on and unseen failure modes.
@@ -115,7 +116,7 @@ class CreateEvaluationMetrics:
 
         # Reset agent
         self.agent.reset_agent()
-        
+
         # Initialize the training parameters
         self.agent.number_of_batches = number_batches
         self.agent.number_of_episodes_per_batch = episodes_per_batch
@@ -163,3 +164,52 @@ class CreateEvaluationMetrics:
             variance_vector.append(variance_value)
 
         return mean_vector, variance_vector
+        
+
+    def qualitative_evaluation_plots(self, number_batches=2500, episodes_per_batch=100, test_type='overall'):
+        """
+        Gives the 2 qualitative plots that is specified in the 'Evaluating Performance' document, namely:
+        1. Plot trajectory over all time steps, for a single test episode that is run AFTER the last episode of the training. (for each individual sample)
+        2. Plot cost over all time steps, for a single test episode that is run AFTER the last episode of the training. (for each individual sample)
+        This is fixed on an arbitrary random seed.
+        """
+
+        # Fix random seed
+        random.seed(1000)
+
+        # Reset agent
+        self.agent.reset_agent()
+
+        # Initialize the training parameters
+        self.agent.number_of_batches = number_batches
+        self.agent.number_of_episodes_per_batch = episodes_per_batch
+
+        # Trains the agent
+        self.agent.run_multiple_batches_and_train()
+
+        # Compute cost and state matrix for a single test episode
+        self.calculate_cost_and_state_for_single_test_episode(test_type)
+
+        # (1) qualitative measure plot
+        combination_index = 0
+        for row in self.state_matrix:
+            a, b = self.agent.possible_combinations[combination_index]  # tuple representing current (a, b) combination
+            plt.plot(range(self.agent.time_steps), row, label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
+            combination_index += 1
+        plt.legend(loc="upper left")  # add a legend
+        plt.title(f"Trajectory plots of a single test episode for test_type: {test_type}")
+        plt.xlabel("Time steps")
+        plt.ylabel("State")
+        plt.show()
+
+        # (2) qualitative measure plot
+        combination_index = 0
+        for row in self.cost_matrix:
+            a, b = self.agent.possible_combinations[combination_index]  # tuple representing current (a, b) combination
+            plt.plot(range(self.agent.time_steps), row, label=f'a = {a}, b = {b}')  # plot the given cost for a single combination of 'a' and 'b' value
+            combination_index += 1
+        plt.legend(loc="upper left")  # add a legend
+        plt.title(f"Cost plots of a single test episode for test_type: {test_type}")
+        plt.xlabel("Time steps")
+        plt.ylabel("Cost")
+        plt.show()

@@ -11,16 +11,18 @@ from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluat
 
 
 def print_statement(mean_vector, variance_vector):
-    "Helper function for printing the mean and standard deviation values."
+    "Helper function for printing the mean and variance values."
 
     print(f'---------------------------------------------------------------')
-    print(f'Total fraction of samples that converge to optimal policy: {mean_vector[0]}, std. of {variance_vector[0]**0.5}')
-    print(f'Average number of time steps for convergence: {mean_vector[1]}, std. of {variance_vector[1]**0.5}')
-    print(f'Average error per time step: {mean_vector[2]}, std. of {variance_vector[2]**0.5}')
+    print(f'Total fraction of samples that converge to optimal policy: {mean_vector[0]}, variance of {variance_vector[0]}')
+    print(f'Average number of time steps for convergence: {mean_vector[1]}, variance of {variance_vector[1]}')
+    print(f'Average error per time step: {mean_vector[2]}, variance of {variance_vector[2]}')
     print(f'---------------------------------------------------------------')
 
 
-def main():
+def main_quantitative():
+    "Quantitative evaluation metrics"
+
     agent = DiscreteQLearning()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
@@ -46,5 +48,24 @@ def main():
     print_statement(mean_vector, variance_vector)
 
 
+def main_qualitative():
+    "Qualitative evaluation metrics"
+
+    agent = DiscreteQLearning()  # create agent
+    evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
+
+    # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
+    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='overall')
+
+    # Produce plots on a single test epsiode, which contains samples of only the trained-on/seen failure modes
+    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='seen')
+
+    # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes.
+    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='unseen')
+
+
 if __name__ == "__main__":
-    main()
+    # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
+
+    #main_quantitative()
+    main_qualitative()

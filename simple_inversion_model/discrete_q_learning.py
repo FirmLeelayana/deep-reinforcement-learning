@@ -162,6 +162,7 @@ class DiscreteQLearning:
         cost_matrix = np.zeros((total_number_combinations, self.time_steps))
         state_matrix = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
+        self.possible_combinations = {}  # initialize (a, b) combination matrix
         
         # Initialize x and u vectors over the time steps
         x_values = np.zeros(self.time_steps + 1)
@@ -188,6 +189,9 @@ class DiscreteQLearning:
 
                     # Basically limits x to x_limit and -x_limit for next state, and updates next state
                     x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+
+                # Store (a, b) combination
+                self.possible_combinations[combination_index] = (a, b)
 
                 # Increment combination index by 1
                 combination_index += 1
