@@ -40,7 +40,7 @@ class DiscreteQLearningActionNoise:
                  possible_b_vector=[1,-1], possible_a_vector=[1,3], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[2], action_noise = [-2, -1, 0, 1, 2],
-                 probability_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
+                 probability_noise = [0.2, 0.2, 0.2, 0.2, 0.2]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -260,6 +260,9 @@ class DiscreteQLearningActionNoise:
                 combination_index += 1
 
         plt.legend(loc="upper left")  # add a legend
+        plt.title(f"{option} plots of a single test episode")
+        plt.xlabel("Time steps")
+        plt.ylabel(f"{option}")
         plt.ion()  # turn on interactive mode
         plt.pause(0.01)  # allow time for GUI to load
         plt.show()
@@ -299,7 +302,7 @@ if __name__ == "__main__":
     # Basically shows the trajectory plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
-    print(np.count_nonzero(agent.number_times_explored))  # exploring the q-table space that has been touched
+    print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.

@@ -248,6 +248,9 @@ class DiscreteQLearning:
                 combination_index += 1
 
         plt.legend(loc="upper left")  # add a legend
+        plt.title(f"{option} plots of a single test episode")
+        plt.xlabel("Time steps")
+        plt.ylabel(f"{option}")
         plt.ion()  # turn on interactive mode
         plt.pause(0.01)  # allow time for GUI to load
         plt.show()
@@ -287,7 +290,7 @@ if __name__ == "__main__":
     # Basically shows the trajectory plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
-    print(np.count_nonzero(agent.number_times_explored))  # exploring the q-table space that has been touched
+    print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
