@@ -1,12 +1,12 @@
-# This file implements the 2nd solution, a simple tabular q learning algorithm to the simple inversion state space model, 
-# with both discrete action and state spaces, with discrete additive noise on the action values to encourage exploration
+# This file implements the 3rd solution, a simple tabular q learning algorithm to the simple inversion state space model, 
+# with both discrete action and state spaces, with discrete additive noise on the state values to encourage exploration
 # of untouched states in the q matrix.
 
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-class DiscreteQLearningActionNoise:
+class DiscreteQLearningStateNoise:
     """
     This class implements the tabular epsilon greedy q-learning algorithm to solve a simple environment model which has the state space equation:
 
@@ -17,7 +17,7 @@ class DiscreteQLearningActionNoise:
     from a nominal mode to a failure mode. The ultimate aim of the q-learning algorithm is to learn an optimal q-table/policy such that
     it would be able to handle any variations in a or b.
 
-    This second solution adds additive noise to the action values, in order to encourage exploration of unseen states in an attempt to solve
+    This third solution adds additive noise to the state values, in order to encourage exploration of unseen states in an attempt to solve
     the inability of the q-learning algorithm to generalize.
 
     Initialization variables:
@@ -31,7 +31,7 @@ class DiscreteQLearningActionNoise:
     number_of_batches = int, number of batches in total. Each batch will train the same Q table, but after a batch, the plot of how well the policy does
                         will be created. Default = 5000.
     unseen_a_vector = array of unseen failure modes in a.
-    action_noise = array of potential noise values to add to the action.
+    state_noise = array of potential noise values to add to the action.
     probability_noise = array of associated probabilities for additive action noise.
     """
 
@@ -39,7 +39,7 @@ class DiscreteQLearningActionNoise:
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[1,3], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[2], action_noise = [-2, -1, 0, 1, 2],
+                 unseen_a_vector=[2], state_noise = [-2, -1, 0, 1, 2],
                  probability_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
                  
                  self.x_limit = x_limit
@@ -64,7 +64,7 @@ class DiscreteQLearningActionNoise:
                  self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
 
                  # Initializing action noises and their associated probabilities
-                 self.action_noise = action_noise
+                 self.state_noise = state_noise
                  self.probability_noise = probability_noise
 
     
@@ -91,9 +91,8 @@ class DiscreteQLearningActionNoise:
                 self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
-            self.u[k] += np.random.choice(self.action_noise, p=self.probability_noise)  # add random additive integer noise to the action
-            self.u[k] = min(max(self.u[k], -self.u_limit), self.u_limit)  # limiting u values to its limits
-            self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
+            additive_noise = np.random.choice(self.state_noise, p=self.probability_noise)  # add random additive integer noise to the state
+            self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k] + additive_noise, -self.x_limit), self.x_limit)
 
         # Learning step (greedy, off-policy)
         for k in range(1, self.time_steps):
@@ -293,7 +292,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningActionNoise(number_of_episodes_per_batch=100, number_of_batches=5000)
+    agent = DiscreteQLearningStateNoise(number_of_episodes_per_batch=100, number_of_batches=5000)
 
     # Fix random seed
     random.seed(1000)
