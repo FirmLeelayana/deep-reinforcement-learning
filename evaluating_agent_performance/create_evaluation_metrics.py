@@ -224,7 +224,7 @@ class CreateEvaluationMetrics:
         plt.show()
 
         # (3) qualitative measure plot
-        plt.plot(range(self.agent.cost_per_batch), self.agent.cost_per_batch)
+        plt.plot(range(len(self.agent.cost_per_batch)), self.agent.cost_per_batch)
         plt.title(f"Average cost per batch: {test_type}")
         plt.xlabel("Batch number")
         plt.ylabel("Average cost")
