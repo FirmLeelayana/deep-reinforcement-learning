@@ -127,6 +127,7 @@ class DiscreteQLearning:
         Trains agent over the specified number of batches, each batch consisting of multiple episodes.
         """
 
+        self.cost_per_batch = []
         for i in range(self.number_of_batches):
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot

@@ -224,7 +224,8 @@ class CreateEvaluationMetrics:
         plt.show()
 
         # (3) qualitative measure plot
-        plt.plot(range(len(self.agent.cost_per_batch)), self.agent.cost_per_batch)
+        smoothed = np.convolve(self.agent.cost_per_batch, np.ones(100), 'valid') / 100  # smooth via convolution
+        plt.plot(range(len(smoothed)), smoothed)
         plt.title(f"Average cost per batch: {test_type}")
         plt.xlabel("Batch number")
         plt.ylabel("Average cost")
