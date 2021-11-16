@@ -32,9 +32,9 @@ class DiscreteQLearning:
 
 
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1,-1], possible_a_vector=[1,3], 
+                 possible_b_vector=[1,-1], possible_a_vector=[1,-1], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[2]):
+                 unseen_a_vector=[2, -2]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -56,6 +56,9 @@ class DiscreteQLearning:
                  
                  # Setting cost to be 0 at optimal state.
                  self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
+
+                 # Initialize cost per batch vector
+                 self.cost_per_batch = []
 
     
     def reset_agent(self):
@@ -127,6 +130,9 @@ class DiscreteQLearning:
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
             self.run_one_batch_and_train()
+
+            # Record cost per batch
+            self.cost_per_batch.append(self.cost.mean())
 
 
     def simulate_single_test_epsiode(self, test_type='overall'):
