@@ -67,6 +67,9 @@ class DiscreteQLearningActionNoise:
                  self.action_noise = action_noise
                  self.probability_noise = probability_noise
 
+                 # Initialize cost per batch vector
+                 self.cost_per_batch = []
+
     
     def reset_agent(self):
         """Resets the q table/agent to its default, untrained state."""
@@ -128,6 +131,7 @@ class DiscreteQLearningActionNoise:
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
+            self.cost_one_batch = np.mean(self.x[:-1] ** 2 + self.u ** 2)
 
     
     def run_multiple_batches_and_train(self):
@@ -139,6 +143,9 @@ class DiscreteQLearningActionNoise:
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
             self.run_one_batch_and_train()
+
+            # Record cost per batch
+            self.cost_per_batch.append(self.cost_one_batch)
 
 
     def simulate_single_test_epsiode(self, test_type='overall'):

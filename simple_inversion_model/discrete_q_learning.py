@@ -119,6 +119,7 @@ class DiscreteQLearning:
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
+            self.cost_one_batch = np.mean(self.x[:-1] ** 2 + self.u ** 2)
 
     
     def run_multiple_batches_and_train(self):
@@ -132,7 +133,7 @@ class DiscreteQLearning:
             self.run_one_batch_and_train()
 
             # Record cost per batch
-            self.cost_per_batch.append(self.cost.mean())
+            self.cost_per_batch.append(self.cost_one_batch)
 
 
     def simulate_single_test_epsiode(self, test_type='overall'):
