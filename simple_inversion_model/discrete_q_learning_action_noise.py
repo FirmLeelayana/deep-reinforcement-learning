@@ -301,7 +301,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningActionNoise(number_of_episodes_per_batch=100, number_of_batches=5000)
+    agent = DiscreteQLearningActionNoise(number_of_episodes_per_batch=100, number_of_batches=5000)  # (1) X = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
