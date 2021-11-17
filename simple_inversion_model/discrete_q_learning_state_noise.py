@@ -39,8 +39,8 @@ class DiscreteQLearningStateNoise:
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[1,-1], state_noise = [-2, -1, 0, 1, 2],
-                 probability_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
+                 unseen_a_vector=[1,-1], state_noise = [-1, 0, 1],
+                 probability_noise = [0.01, 0.98, 0.01]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -311,7 +311,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningStateNoise(number_of_episodes_per_batch=100, number_of_batches=5000)
+    agent = DiscreteQLearningStateNoise(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)

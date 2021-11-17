@@ -23,26 +23,28 @@ def print_statement(mean_vector, variance_vector):
 def main_quantitative():
     "Quantitative evaluation metrics"
 
+    # (1) 15,000 = number of batches until convergence
+
     agent = DiscreteQLearningStateNoise()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Evaluate metrics on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
-                                                                              seed_range=[x for x in range(10)], test_type='overall')
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=15000, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(5)], test_type='overall')
     # Output mean vector and std. vector
     print(f'Overall combination of failure modes')
     print_statement(mean_vector, variance_vector)
 
     # Evaluate metrics on a single test epsiode, which contains samples of only the trained-on/seen failure modes
-    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
-                                                                              seed_range=[x for x in range(10)], test_type='seen')
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=15000, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(5)], test_type='seen')
     # Output mean vector and covariance vector
     print(f'Trained-on combinations of failure modes')
     print_statement(mean_vector, variance_vector)
 
     # Evaluate metrics on a single test epsiode, which contains samples of only the unseen failure modes.
-    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=2500, episodes_per_batch=100, 
-                                                                              seed_range=[x for x in range(10)], test_type='unseen')
+    mean_vector, variance_vector = evaluation.create_evaluation_table_overall(number_batches=15000, episodes_per_batch=100, 
+                                                                              seed_range=[x for x in range(5)], test_type='unseen')
     # Output mean vector and covariance vector
     print(f'Unseen combinations of failure modes')
     print_statement(mean_vector, variance_vector)
@@ -51,21 +53,23 @@ def main_quantitative():
 def main_qualitative():
     "Qualitative evaluation metrics"
 
+    # (1) 15,000 = number of batches until convergence
+
     agent = DiscreteQLearningStateNoise()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='overall')
+    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='overall')
 
     # Produce plots on a single test epsiode, which contains samples of only the trained-on/seen failure modes
-    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='seen')
+    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='seen')
 
     # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=2500, episodes_per_batch=100, test_type='unseen')
+    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='unseen')
 
 
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
 
-    #main_quantitative()
-    main_qualitative()
+    main_quantitative()
+    #main_qualitative()

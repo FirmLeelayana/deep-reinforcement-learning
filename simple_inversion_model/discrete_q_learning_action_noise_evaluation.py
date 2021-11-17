@@ -71,5 +71,5 @@ def main_qualitative():
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
 
-    main_quantitative()
-    #main_qualitative()
+    #main_quantitative()
+    main_qualitative()
