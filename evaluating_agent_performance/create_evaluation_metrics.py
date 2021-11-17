@@ -225,7 +225,7 @@ class CreateEvaluationMetrics:
         plt.ylabel("Cost")
         plt.show()
 
-        # (3) qualitative measure plot
+        # (3) qualitative measure plot -> plot of cost over the training iterations
         if test_type == 'seen':
             smoothed = np.convolve(self.agent.cost_per_batch, np.ones(100), 'valid') / 100  # smooth via convolution
             plt.plot(range(len(smoothed)), smoothed)
