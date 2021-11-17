@@ -37,9 +37,9 @@ class DiscreteQLearningActionNoise:
 
 
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1,-1], possible_a_vector=[1,-1], 
+                 possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[2,-2], action_noise = [-2, -1, 0, 1, 2],
+                 unseen_a_vector=[1,-1], action_noise = [-2, -1, 0, 1, 2],
                  probability_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
                  
                  self.x_limit = x_limit
@@ -131,7 +131,6 @@ class DiscreteQLearningActionNoise:
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
-            self.cost_one_batch = np.mean(self.x[:-1] ** 2 + self.u ** 2)
 
     
     def run_multiple_batches_and_train(self):
@@ -144,9 +143,6 @@ class DiscreteQLearningActionNoise:
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
             self.run_one_batch_and_train()
-
-            # Record cost per batch
-            self.cost_per_batch.append(self.cost_one_batch)
 
 
     def simulate_single_test_epsiode(self, test_type='overall'):
@@ -218,6 +214,21 @@ class DiscreteQLearningActionNoise:
                 combination_index += 1
 
         return cost_matrix, state_matrix
+
+
+    def run_multiple_batches_and_train_record_cost(self):
+        """
+        Trains agent over the specified number of batches, each batch consisting of multiple episodes, and record cost.
+        """
+
+        self.cost_per_batch = []
+        for i in range(self.number_of_batches):
+            if i > 10:
+                self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
+            self.run_one_batch_and_train()
+
+            # Record cost per batch
+            self.cost_per_batch.append(np.mean(self.simulate_single_test_epsiode()[0]))
 
 
     def plot_test_episode(self, option='trajectory'):
@@ -301,7 +312,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningActionNoise(number_of_episodes_per_batch=100, number_of_batches=5000)  # (1) X = number of batches until convergence
+    agent = DiscreteQLearningActionNoise(number_of_episodes_per_batch=100, number_of_batches=5000)  # (1) 5000 = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)

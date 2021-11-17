@@ -98,7 +98,7 @@ class CreateEvaluationMetrics:
         return np.mean(self.cost_matrix)
 
 
-    def create_evaluation_table_overall(self, number_batches=2500, episodes_per_batch=100, seed_range=[x for x in range(10)], test_type='overall'):
+    def create_evaluation_table_overall(self, number_batches=2500, episodes_per_batch=100, seed_range=[x for x in range(5)], test_type='overall'):
         """
         This creates an evaluation table corresponding to a test episode which involves all possible combinations of a and 
         b values - i.e. includes both trained-on and unseen failure modes.
@@ -196,7 +196,7 @@ class CreateEvaluationMetrics:
         self.agent.number_of_episodes_per_batch = episodes_per_batch
 
         # Trains the agent
-        self.agent.run_multiple_batches_and_train()
+        self.agent.run_multiple_batches_and_train_record_cost()
 
         # Compute cost and state matrix for a single test episode
         self.calculate_cost_and_state_for_single_test_episode(test_type)
@@ -227,8 +227,10 @@ class CreateEvaluationMetrics:
 
         # (3) qualitative measure plot -> plot of cost over the training iterations
         if test_type == 'seen':
-            smoothed = np.convolve(self.agent.cost_per_batch, np.ones(100), 'valid') / 100  # smooth via convolution
-            plt.plot(range(len(smoothed)), smoothed)
+            smoothed = np.convolve(self.agent.cost_per_batch, np.ones(number_batches//25), 'valid') / (number_batches//25)  # smooth via convolution
+            plt.plot(range(len(smoothed)), smoothed, label='Smoothed cost', lw=3, c='r',zorder=10)
+            plt.plot(range(len(self.agent.cost_per_batch)), self.agent.cost_per_batch, label=f'Cost')
+            plt.legend(loc="upper left")  # add a legend
             plt.title(f"Average cost per batch: {test_type}")
             plt.xlabel("Batch number")
             plt.ylabel("Average cost")
