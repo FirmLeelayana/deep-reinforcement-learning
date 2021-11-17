@@ -177,10 +177,12 @@ class CreateEvaluationMetrics:
 
     def qualitative_evaluation_plots(self, number_batches=2500, episodes_per_batch=100, test_type='overall'):
         """
-        Gives the 2 qualitative plots that is specified in the 'Evaluating Performance' document, namely:
+        Gives the 3 qualitative plots that is specified in the 'Evaluating Performance' document, namely:
         1. Plot trajectory over all time steps, for a single test episode that is run AFTER the last episode of the training. (for each individual sample)
         2. Plot cost over all time steps, for a single test episode that is run AFTER the last episode of the training. (for each individual sample)
         This is fixed on an arbitrary random seed.
+        3. A plot of the average cost in the final episode of a batch over the entire training batch sequence. 
+           This is then smoothed via convolution as well (arbitrary window of 100).
         """
 
         # Fix random seed
