@@ -37,9 +37,9 @@ class DiscreteQLearningStateNoise:
 
 
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1,-1], possible_a_vector=[1,3], 
+                 possible_b_vector=[1,-1], possible_a_vector=[1,-1], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[2], state_noise = [-2, -1, 0, 1, 2],
+                 unseen_a_vector=[2,-2], state_noise = [-2, -1, 0, 1, 2],
                  probability_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
                  
                  self.x_limit = x_limit
