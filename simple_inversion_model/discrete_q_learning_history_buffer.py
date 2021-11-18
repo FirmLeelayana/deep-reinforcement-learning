@@ -75,7 +75,7 @@ class DiscreteQLearningHistoryBuffer:
         """
 
         # Exploration step - either following the optimal policy, or exploring randomly
-        for k in range(1, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
+        for k in range(2, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
             if random.uniform(0, 1) < self.epsilon:  # exploring with probability epsilon (epsilon greedy)
                 self.u[k] = random.randint(-self.u_limit, self.u_limit)  # u(k) will be updated with a random value between -u_limit and u_limit (explore)
             else:
@@ -88,7 +88,7 @@ class DiscreteQLearningHistoryBuffer:
             self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
 
         # Learning step (greedy, off-policy)
-        for k in range(1, self.time_steps):
+        for k in range(2, self.time_steps):
             # Grabs current count value for current augmented agent state and action, and increment by 1
             self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
                                        int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
@@ -311,7 +311,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningHistoryBuffer(number_of_episodes_per_batch=100, number_of_batches=100000)  # (1) X = number of batches until convergence
+    agent = DiscreteQLearningHistoryBuffer(number_of_episodes_per_batch=100, number_of_batches=100000)  # (1) 100,000 ++ = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
