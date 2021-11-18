@@ -1,12 +1,12 @@
 # This file uses the create_evaluation_metrics file under the 'evaluating_agent_performance' subfolder in order to output
-# evaluation metrics for the discrete_q_learning_state_action_noise case, as specified in the 'Evaluating RL algorithms' document.
+# evaluation metrics for the discrete_q_learning case, as specified in the 'Evaluating RL algorithms' document.
 
 import os, sys
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
-from discrete_q_learning_state_action_noise import DiscreteQLearningStateActionNoise  # import RL agent class
+from discrete_q_learning_history_buffer import DiscreteQLearningHistoryBuffer  # import RL agent class
 from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluationMetrics  # import evaluation class
 
 
@@ -23,9 +23,9 @@ def print_statement(mean_vector, variance_vector):
 def main_quantitative():
     "Quantitative evaluation metrics"
 
-    # (1) 3000 = number of batches until convergence
+    # No. batches until convergence = X
 
-    agent = DiscreteQLearningStateActionNoise()  # create agent
+    agent = DiscreteQLearningHistoryBuffer()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Evaluate metrics on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
@@ -53,9 +53,9 @@ def main_quantitative():
 def main_qualitative():
     "Qualitative evaluation metrics"
 
-    # (1) 3000 = number of batches until convergence
+    # No. batches until convergence = X
 
-    agent = DiscreteQLearningStateActionNoise()  # create agent
+    agent = DiscreteQLearningHistoryBuffer()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
