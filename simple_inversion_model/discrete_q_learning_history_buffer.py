@@ -31,7 +31,7 @@ class DiscreteQLearningHistoryBuffer:
     """
 
 
-    def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
+    def __init__(self, x_limit=10, u_limit = 10, time_steps=11, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
@@ -46,16 +46,16 @@ class DiscreteQLearningHistoryBuffer:
                  self.number_of_episodes_per_batch = number_of_episodes_per_batch
                  self.number_of_batches = number_of_batches
 
-                 # Creating a 6D matrix for the Q table. Dimensions for: x(k-2), x(k-1), u(k-2), u(k-1), x(k), against all possible u(k) values.
+                 # Creating a 5D matrix for the Q table. Dimensions for: x(k-2), x(k-1), x(k), u(k-1), against all possible u(k) values.
                  # The three initial dimensions represent the augmented state of the system required to make it Markovian.
                  # We randomly initialize Q matrix (values between 0, 1) with the Q matrix indicating cost. There are 2*x_limit + 1 overall possible
                  # discrete states per each state, as we are going from negative x_limit to positive x_limit range. Same applies
                  # to the number of discrete input states possible. 
-                 self.q_table = np.random.rand(2*x_limit + 1, 2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1, 2*u_limit + 1)
-                 self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
+                 self.q_table = np.random.rand(2*x_limit + 1, 2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1)
+                 self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
                  
                  # Setting cost to be 0 at optimal state.
-                 self.q_table[x_limit, x_limit, x_limit, u_limit, u_limit, u_limit] = 0 
+                 self.q_table[x_limit, x_limit, x_limit, u_limit, u_limit] = 0 
 
                  # Initialize cost per batch vector
                  self.cost_per_batch = []
@@ -64,9 +64,9 @@ class DiscreteQLearningHistoryBuffer:
     def reset_agent(self):
         """Resets the q table/agent to its default, untrained state."""
 
-        self.q_table = np.random.rand(2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1)
-        self.number_times_explored = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 0)
-        self.q_table[self.x_limit, self.x_limit, self.x_limit, self.u_limit, self.u_limit, self.u_limit] = 0 
+        self.q_table = np.random.rand(2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1)
+        self.number_times_explored = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 0)
+        self.q_table[self.x_limit, self.x_limit, self.x_limit, self.u_limit, self.u_limit] = 0 
 
 
     def run_one_episode_and_train(self):
@@ -81,7 +81,7 @@ class DiscreteQLearningHistoryBuffer:
             else:
                 # Choose minimum cost action, minimised over all the possible actions (u(k))
                 min_cost_index = np.argmin(self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
-                                                        int(self.u[k-2] + self.u_limit), int(self.u[k-1] + self.u_limit)])
+                                                        int(self.u[k-1] + self.u_limit)])
                 self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
@@ -91,22 +91,22 @@ class DiscreteQLearningHistoryBuffer:
         for k in range(1, self.time_steps):
             # Grabs current count value for current augmented agent state and action, and increment by 1
             self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
-                                       int(self.u[k-2] + self.u_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
+                                       int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
             count = self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
-                                               int(self.u[k-2] + self.u_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
+                                               int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
 
             # Normalization constant; the more the current state is explored, the less impact the new q values contribute (discount factor)
             norm_constant = (1/count)
 
             current_q_value = self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
-                                           int(self.u[k-2] + self.u_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
+                                           int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
             cost = self.x[k]**2 + self.u[k]**2
             least_cost_action = min(self.q_table[int(self.x[k+1] + self.x_limit), int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), 
-                                                 int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)])
+                                                 int(self.u[k] + self.u_limit)])
 
             # Update Q table for the current augmented agent state (containing xk xk-1 xk-2 uk-1 uk-2) and current action uk
             self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
-                         int(self.u[k-2] + self.u_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
+                         int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
     
 
     def run_one_batch_and_train(self):
@@ -188,10 +188,10 @@ class DiscreteQLearningHistoryBuffer:
                 x_values[0] = 0
                 u_values[0] = 0
 
-                for k in range(1, self.time_steps):
+                for k in range(2, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
                     min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(x_values[k-2] + self.x_limit), 
-                                                        int(u_values[k-2] + self.u_limit), int(u_values[k-1] + self.u_limit)])
+                                                            int(u_values[k-1] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
@@ -259,7 +259,7 @@ class DiscreteQLearningHistoryBuffer:
                 for k in range(2, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
                     min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(x_values[k-2] + self.x_limit), 
-                                               int(u_values[k-2] + self.u_limit), int(u_values[k-1] + self.u_limit)])
+                                               int(u_values[k-1] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
