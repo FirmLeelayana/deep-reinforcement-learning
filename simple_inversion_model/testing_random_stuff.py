@@ -242,7 +242,7 @@ class DiscreteQLearningStateActionNoise:
     def plot_test_episode(self, option='trajectory'):
         """
         Plots time step against the state value, for the current trained policy.
-        Each single test episode will have it's own cost matrix, and it's own trajectory plot for all the different combinations.
+        Each single test episode will have it's own cost matrix, and it's own trajectory plot for ALL the different combinations (unseen + seen)
 
         option = string, represents which plot we want to see.
         """
@@ -262,7 +262,7 @@ class DiscreteQLearningStateActionNoise:
 
         plt.clf()  # clears the current figure
 
-        # Iterating over all possible combinations of a and b values.
+        # Iterating over ALL possible combinations of a and b values.
         for b in self.possible_b_vector:
             for a in a_vector:
                 # Initializing x and u values.
