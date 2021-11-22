@@ -2,6 +2,7 @@
 # evaluation metrics for the discrete_q_learning_q_matrix_noise case, as specified in the 'Evaluating RL algorithms' document.
 
 import os, sys
+import numpy as np
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
@@ -72,5 +73,5 @@ def main_qualitative():
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
 
-    main_quantitative()
-    #main_qualitative()
+    #main_quantitative()
+    main_qualitative()
