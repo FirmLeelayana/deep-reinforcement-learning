@@ -1,12 +1,12 @@
-# This file implements the 3rd solution, a simple tabular q learning algorithm to the simple inversion state space model, 
-# with both discrete action and state spaces, with discrete additive noise on the state values to encourage exploration
-# of untouched states in the q matrix.
+# This file implements the 4th solution, a simple tabular q learning algorithm to the simple inversion state space model, 
+# with both discrete action and state spaces, with discrete additive noise on the state values as well as action values to encourage exploration
+# of untouched states in the q matrix, in hopes that it will improve performance.
 
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-class DiscreteQLearningStateNoise:
+class DiscreteQLearningStateActionNoise:
     """
     This class implements the tabular epsilon greedy q-learning algorithm to solve a simple environment model which has the state space equation:
 
@@ -32,7 +32,9 @@ class DiscreteQLearningStateNoise:
                         will be created. Default = 5000.
     unseen_a_vector = array of unseen failure modes in a.
     state_noise = array of potential noise values to add to the state.
-    probability_noise = array of associated probabilities for additive state noise.
+    probability_state_noise = array of associated probabilities for additive state noise.
+    action_noise = array of potential noise values to add to the action.
+    probability_action_noise = array of associated probabilities for additive action noise.
     """
 
 
@@ -40,7 +42,8 @@ class DiscreteQLearningStateNoise:
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1,-1], state_noise = [-1, 0, 1],
-                 probability_noise = [0.01, 0.98, 0.01]):
+                 probability_state_noise = [0.01, 0.98, 0.01], action_noise = [-2, -1, 0, 1, 2],
+                 probability_action_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -65,7 +68,11 @@ class DiscreteQLearningStateNoise:
 
                  # Initializing action noises and their associated probabilities
                  self.state_noise = state_noise
-                 self.probability_noise = probability_noise
+                 self.probability_state_noise = probability_state_noise
+
+                 # Initializing action noises and their associated probabilities
+                 self.action_noise = action_noise
+                 self.probability_action_noise = probability_action_noise
 
                  # Initialize cost per batch vector
                  self.cost_per_batch = []
@@ -94,7 +101,9 @@ class DiscreteQLearningStateNoise:
                 self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
-            additive_noise = np.random.choice(self.state_noise, p=self.probability_noise)  # add random additive integer noise to the state
+            self.u[k] += np.random.choice(self.action_noise, p=self.probability_action_noise)  # add random additive integer noise to the action
+            self.u[k] = min(max(self.u[k], -self.u_limit), self.u_limit)  # limiting u values to its limits
+            additive_noise = np.random.choice(self.state_noise, p=self.probability_state_noise)  # add random additive integer noise to the state
             self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k] + additive_noise, -self.x_limit), self.x_limit)
 
         # Learning step (greedy, off-policy)
@@ -237,9 +246,13 @@ class DiscreteQLearningStateNoise:
 
         option = string, represents which plot we want to see.
         """
+        
+        a_vector = self.possible_a_vector.copy()
+        a_vector.extend(self.unseen_a_vector)
+        a_vector.sort()
 
         # Initialize cost matrix for each possible combination at each time step
-        total_number_combinations = len(self.possible_a_vector) * len(self.possible_b_vector)
+        total_number_combinations = len(a_vector) * len(self.possible_b_vector)
         self.cost = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
         
@@ -251,7 +264,7 @@ class DiscreteQLearningStateNoise:
 
         # Iterating over all possible combinations of a and b values.
         for b in self.possible_b_vector:
-            for a in self.possible_a_vector:
+            for a in a_vector:
                 # Initializing x and u values.
                 x_values[1] = self.x_limit / 5  # testing agent on a step impulse
                 x_values[0] = 0
@@ -311,7 +324,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningStateNoise(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
+    agent = DiscreteQLearningStateActionNoise(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 3000 = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
@@ -321,10 +334,4 @@ if __name__ == "__main__":
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
     print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
-    agent.reset_agent()  # Reset agent
-
-    # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
-    # Basically shows the cost plot as it is training.
-    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'cost')
-    plt.pause(5)  # Pause the final plot for 5 seconds
     agent.reset_agent()  # Reset agent

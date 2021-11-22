@@ -240,7 +240,7 @@ class DiscreteQLearningActionNoise:
         """
 
         # Initialize cost matrix for each possible combination at each time step
-        total_number_combinations = len(self.possible_a_vector) + len(self.possible_b_vector)
+        total_number_combinations = len(self.possible_a_vector) * len(self.possible_b_vector)
         self.cost = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
         
