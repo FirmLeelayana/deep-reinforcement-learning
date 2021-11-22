@@ -24,7 +24,7 @@ def print_statement(mean_vector, variance_vector):
 def main_quantitative():
     "Quantitative evaluation metrics"
 
-    # (1) 100,000 ++ = number of batches until convergence
+    # (1) 150,000 = number of batches until convergence
 
     agent = DiscreteQLearningHistoryBuffer()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
@@ -54,7 +54,7 @@ def main_quantitative():
 def main_qualitative():
     "Qualitative evaluation metrics"
 
-    # (1) 100,000 ++ = number of batches until convergence
+    # (1) 150,000 = number of batches until convergence
 
     agent = DiscreteQLearningHistoryBuffer()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
@@ -73,5 +73,5 @@ def main_qualitative():
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
 
-    main_quantitative()
-    #main_qualitative()
+    #main_quantitative()
+    main_qualitative()
