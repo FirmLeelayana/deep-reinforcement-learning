@@ -39,9 +39,8 @@ class DiscreteQLearningQMatrixNoise:
     def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
-                 unseen_a_vector=[1,-1], state_noise = [-1, 0, 1],
-                 probability_state_noise = [0.01, 0.98, 0.01], action_noise = [-2, -1, 0, 1, 2],
-                 probability_action_noise = [0.05, 0.15, 0.6, 0.15, 0.05]):
+                 unseen_a_vector=[1,-1], q_matrix_noise=[ -1, 0, 1],
+                 probability_noise=[0.01, 0.98, 0.01]):
                  
                  self.x_limit = x_limit
                  self.u_limit = u_limit
@@ -64,13 +63,9 @@ class DiscreteQLearningQMatrixNoise:
                  # Setting cost to be 0 at optimal state.
                  self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
 
-                 # Initializing action noises and their associated probabilities
-                 self.state_noise = state_noise
-                 self.probability_state_noise = probability_state_noise
-
-                 # Initializing action noises and their associated probabilities
-                 self.action_noise = action_noise
-                 self.probability_action_noise = probability_action_noise
+                 # Initializing q matrix noises and their associated probabilities
+                 self.q_matrix_noise = q_matrix_noise
+                 self.probability_noise = probability_noise
 
                  # Initialize cost per batch vector
                  self.cost_per_batch = []
@@ -98,17 +93,16 @@ class DiscreteQLearningQMatrixNoise:
                 min_cost_index = np.argmin(self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit)])
                 self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
 
-            # Basically limits x to x_limit and -x_limit for next state, and updates next state
-            self.u[k] += np.random.choice(self.action_noise, p=self.probability_action_noise)  # add random additive integer noise to the action
-            self.u[k] = min(max(self.u[k], -self.u_limit), self.u_limit)  # limiting u values to its limits
-            additive_noise = np.random.choice(self.state_noise, p=self.probability_state_noise)  # add random additive integer noise to the state
-            self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k] + additive_noise, -self.x_limit), self.x_limit)
+            self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
 
         # Learning step (greedy, off-policy)
         for k in range(1, self.time_steps):
+            noise_index = np.random.choice(self.q_matrix_noise, p=self.probability_noise)
+            index = min(max(noise_index + self.x[k], -self.x_limit), self.x_limit)
+            index += self.x_limit
             # Grabs current count value for current augmented agent state and action, and increment by 1
-            self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
-            count = self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
+            self.number_times_explored[int(index), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
+            count = self.number_times_explored[int(index), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
 
             # Normalization constant; the more the current state is explored, the less impact the new q values contribute (discount factor)
             norm_constant = (1/count)
@@ -118,7 +112,7 @@ class DiscreteQLearningQMatrixNoise:
             least_cost_action = min(self.q_table[int(self.x[k+1] + self.x_limit), int(self.x[k] + self.x_limit), int(self.u[k] + self.u_limit)])
 
             # Update Q table for the current augmented agent state (containing xk xk-1 uk-1) and current action uk
-            self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), 
+            self.q_table[int(index), int(self.x[k-1] + self.x_limit), 
                          int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
     
 
@@ -322,7 +316,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningQMatrixNoise(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) X = number of batches until convergence
+    agent = DiscreteQLearningQMatrixNoise(number_of_episodes_per_batch=100, number_of_batches=10000)  # (1) 10,000 = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
