@@ -234,13 +234,17 @@ class DiscreteQLearningActionNoise:
     def plot_test_episode(self, option='trajectory'):
         """
         Plots time step against the state value, for the current trained policy.
-        Each single test episode will have it's own cost matrix, and it's own trajectory plot for all the different combinations.
+        Each single test episode will have it's own cost matrix, and it's own trajectory plot for ALL the different combinations (unseen + seen)
 
         option = string, represents which plot we want to see.
         """
+        
+        a_vector = self.possible_a_vector.copy()
+        a_vector.extend(self.unseen_a_vector)
+        a_vector.sort()
 
         # Initialize cost matrix for each possible combination at each time step
-        total_number_combinations = len(self.possible_a_vector) * len(self.possible_b_vector)
+        total_number_combinations = len(a_vector) * len(self.possible_b_vector)
         self.cost = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
         
@@ -250,9 +254,9 @@ class DiscreteQLearningActionNoise:
 
         plt.clf()  # clears the current figure
 
-        # Iterating over all possible combinations of a and b values.
+        # Iterating over ALL possible combinations of a and b values.
         for b in self.possible_b_vector:
-            for a in self.possible_a_vector:
+            for a in a_vector:
                 # Initializing x and u values.
                 x_values[1] = self.x_limit / 5  # testing agent on a step impulse
                 x_values[0] = 0
