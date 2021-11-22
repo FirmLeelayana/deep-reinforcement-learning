@@ -230,13 +230,17 @@ class DiscreteQLearningHistoryBuffer:
     def plot_test_episode(self, option='trajectory'):
         """
         Plots time step against the state value, for the current trained policy.
-        Each single test episode will have it's own cost matrix, and it's own trajectory plot for all the different combinations.
+        Each single test episode will have it's own cost matrix, and it's own trajectory plot for ALL the different combinations (unseen + seen)
 
         option = string, represents which plot we want to see.
         """
+        
+        a_vector = self.possible_a_vector.copy()
+        a_vector.extend(self.unseen_a_vector)
+        a_vector.sort()
 
         # Initialize cost matrix for each possible combination at each time step
-        total_number_combinations = len(self.possible_a_vector) * len(self.possible_b_vector)
+        total_number_combinations = len(a_vector) * len(self.possible_b_vector)
         self.cost = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
         
@@ -246,20 +250,17 @@ class DiscreteQLearningHistoryBuffer:
 
         plt.clf()  # clears the current figure
 
-        # Iterating over all possible combinations of a and b values.
+        # Iterating over ALL possible combinations of a and b values.
         for b in self.possible_b_vector:
-            for a in self.possible_a_vector:
+            for a in a_vector:
                 # Initializing x and u values.
-                x_values[2] = self.x_limit / 5  # testing agent on a step impulse
-                x_values[1] = 0
-                u_values[1] = 0
+                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
                 x_values[0] = 0
                 u_values[0] = 0
 
-                for k in range(2, self.time_steps):
+                for k in range(1, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(x_values[k-2] + self.x_limit), 
-                                               int(u_values[k-1] + self.u_limit)])
+                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
