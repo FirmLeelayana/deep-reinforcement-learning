@@ -31,7 +31,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
     """
 
 
-    def __init__(self, x_limit=10, u_limit = 10, time_steps=11, epsilon=1, 
+    def __init__(self, x_limit=5, u_limit = 5, time_steps=11, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
@@ -98,6 +98,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
                                                  int(self.u[k] + self.u_limit), int(self.u[k-1] + self.u_limit)])
 
             # Update Q table for the current augmented agent state (containing xk xk-1 xk-2 uk-1 uk-2) and current action uk
+            # Now just the optimality deterministic bellman equation update for state action value.
             self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.x[k-2] + self.x_limit), 
                          int(self.u[k-1] + self.u_limit), int(self.u[k-2] + self.u_limit), int(self.u[k] + self.u_limit)] = cost + least_cost_action
     
@@ -255,7 +256,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
 
                 for k in range(2, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit), int(u_values[k-2] + self.u_limit)])
+                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(x_values[k-2] + self.x_limit), int(u_values[k-1] + self.u_limit), int(u_values[k-2] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
@@ -314,7 +315,7 @@ if __name__ == "__main__":
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
     # Basically shows the trajectory plot as it is training.
-    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
+    agent.run_multiple_batches_and_plot(batch_number_until_plot=500, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
     print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
     agent.reset_agent()  # Reset agent
