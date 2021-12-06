@@ -247,11 +247,13 @@ class DiscreteQLearningHistoryBufferDeterministic:
         for b in self.possible_b_vector:
             for a in a_vector:
                 # Initializing x and u values.
-                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[2] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[1] = 0
+                u_values[1] = 0
                 x_values[0] = 0
                 u_values[0] = 0
 
-                for k in range(1, self.time_steps):
+                for k in range(2, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
                     min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit), int(u_values[k-2] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
