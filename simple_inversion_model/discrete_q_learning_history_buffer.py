@@ -118,9 +118,9 @@ class DiscreteQLearningHistoryBuffer:
         self.u = np.zeros(self.time_steps)
         self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
 
-        # Selects a number randomly between -x_limit and x_limit, and places it in x[1].
-        # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
-        self.x[1] = random.randint(-self.x_limit, self.x_limit)
+        # Selects a number randomly between -x_limit and x_limit, and places it in x[2].
+        # Starts at 2 as you need the previous x and u values as history buffer, to make it a Markovian process.
+        self.x[2] = random.randint(-self.x_limit, self.x_limit)
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
@@ -254,13 +254,15 @@ class DiscreteQLearningHistoryBuffer:
         for b in self.possible_b_vector:
             for a in a_vector:
                 # Initializing x and u values.
-                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[2] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[1] = 0
+                u_values[1] = 0
                 x_values[0] = 0
                 u_values[0] = 0
 
-                for k in range(1, self.time_steps):
+                for k in range(2, self.time_steps):
                     # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
+                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(x_values[k-2] + self.x_limit), int(u_values[k-1] + self.u_limit)])
                     u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination

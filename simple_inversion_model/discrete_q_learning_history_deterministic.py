@@ -112,9 +112,9 @@ class DiscreteQLearningHistoryBufferDeterministic:
         self.u = np.zeros(self.time_steps)
         self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
 
-        # Selects a number randomly between -x_limit and x_limit, and places it in x[1].
-        # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
-        self.x[1] = random.randint(-self.x_limit, self.x_limit)
+        # Selects a number randomly between -x_limit and x_limit, and places it in x[2].
+        # Starts at 2 as you need the previous x and u values as history buffer, to make it a Markovian process.
+        self.x[2] = random.randint(-self.x_limit, self.x_limit)
 
         for i in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
