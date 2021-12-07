@@ -129,6 +129,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
         for i in range(self.number_of_batches):
             if i > 10:
                 self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
+
             self.run_one_batch_and_train()
 
 
@@ -308,14 +309,14 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearningHistoryBufferDeterministic(number_of_episodes_per_batch=100, number_of_batches=100000)  # (1) X = number of batches until convergence
+    agent = DiscreteQLearningHistoryBufferDeterministic(number_of_episodes_per_batch=100, number_of_batches=1000000)  # (1) X = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
     # Basically shows the trajectory plot as it is training.
-    agent.run_multiple_batches_and_plot(batch_number_until_plot=500, option = 'trajectory')
+    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
     plt.pause(5)  # Pause the final plot for 5 seconds
     print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
     agent.reset_agent()  # Reset agent
