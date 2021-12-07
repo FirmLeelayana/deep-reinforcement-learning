@@ -31,7 +31,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
     """
 
 
-    def __init__(self, x_limit=5, u_limit = 5, time_steps=11, epsilon=1, 
+    def __init__(self, x_limit=3, u_limit = 3, time_steps=11, epsilon=1, 
                  possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
@@ -177,7 +177,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
         for b in self.possible_b_vector:
             for a in a_vector:
                 # Initializing x and u values.
-                x_values[2] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[2] = self.x_limit / 3  # testing agent on a step impulse
                 x_values[1] = 0
                 u_values[1] = 0
                 x_values[0] = 0
@@ -249,7 +249,7 @@ class DiscreteQLearningHistoryBufferDeterministic:
         for b in self.possible_b_vector:
             for a in a_vector:
                 # Initializing x and u values.
-                x_values[2] = self.x_limit / 5  # testing agent on a step impulse
+                x_values[2] = self.x_limit / 3  # testing agent on a step impulse
                 x_values[1] = 0
                 u_values[1] = 0
                 x_values[0] = 0
