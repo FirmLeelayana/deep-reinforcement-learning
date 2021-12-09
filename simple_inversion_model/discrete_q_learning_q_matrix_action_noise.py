@@ -112,7 +112,7 @@ class DiscreteQLearningActionNoiseQMatrix:
             least_cost_action = min(self.q_table[int(self.x[k+1] + self.x_limit), int(self.x[k] + self.x_limit), int(self.u[k] + self.u_limit)])
 
             # Update Q table for the current augmented agent state (containing xk xk-1 uk-1) and current action uk
-            self.u[k] += np.random.choice(self.action_noise, p=self.probability_noise)  # add random additive integer noise to the q matrix action index
+            self.u[k] += np.random.choice([-1, 0, 1], p=[0.05, 0.9, 0.05])  # add random additive integer noise to the q matrix action index
             self.u[k] = min(max(self.u[k], -self.u_limit), self.u_limit)  # limiting u values to its limits
             self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), 
                          int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
