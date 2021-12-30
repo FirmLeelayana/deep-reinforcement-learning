@@ -1,12 +1,12 @@
-# Neural network as a function approximator to the q-matrix
+# Neural network as a function approximator to the q-matrix, via DQN algorithm.
 
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-class DiscreteQLearning:
+class DQN:
     """
-    This class implements the tabular epsilon greedy q-learning algorithm to solve a simple environment model which has the state space equation:
+    This class implements the DQN algorithm to solve a simple environment model which has the state space equation:
 
     x(k+1) = a * x(k) + b * u(k)
 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
+    agent = DQN(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
 
     # Fix random seed
     random.seed(1000)
