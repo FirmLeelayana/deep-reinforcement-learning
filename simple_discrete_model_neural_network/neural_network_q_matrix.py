@@ -3,6 +3,9 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+from collections import deque
+import tensorflow as tf
+from tensorflow import keras
 
 class DQN:
     """
@@ -44,27 +47,50 @@ class DQN:
                  self.number_of_episodes_per_batch = number_of_episodes_per_batch
                  self.number_of_batches = number_of_batches
 
-                 # Creating a 4D matrix for the Q table. Dimensions for: x(k-1), u(k-1), x(k), against all possible u(k) values.
-                 # The three initial dimensions represent the augmented state of the system required to make it Markovian.
-                 # We randomly initialize Q matrix (values between 0, 1) with the Q matrix indicating cost. There are 2*x_limit + 1 overall possible
-                 # discrete states per each state, as we are going from negative x_limit to positive x_limit range. Same applies
-                 # to the number of discrete input states possible. 
-                 self.q_table = np.random.rand(2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1)
-                 self.number_times_explored = np.full((2*x_limit + 1, 2*x_limit + 1, 2*u_limit + 1, 2*u_limit + 1), 0)
-                 
-                 # Setting cost to be 0 at optimal state.
-                 self.q_table[x_limit, x_limit, u_limit, u_limit] = 0 
-
                  # Initialize cost per batch vector
                  self.cost_per_batch = []
 
+                 # Parameters required for creating a NN
+                 self.state_size = 3    # Augmented state = xk xk-1 uk-1, 3 parameters
+                 self.action_size = u_limit * 2 + 1     # Action size = the values 'u' can take
+                 self.memory = deque(maxlen=2000)   # Experience replay buffer, to sample from
+                 self.gamma = 0.95    # discount rate
+                 self.epsilon = 1.0  # exploration rate (initial)
+                 self.epsilon_min = 0.01    # minimum epsilon value
+                 self.epsilon_decay = 0.01     # decay for our epsilon initial value as we run episodes
+                 self.learning_rate = 0.001     # learning rate, alpha
+                 self.model = self._build_model()   # create our neural network model
+    
+
+    def _build_model(self):
+        """Creates our neural network model architecture."""
+
+        model = keras.Sequential()  # simple sequential neural network, with 3 fully/densely connected layers
+        init = tf.keras.initializers.HeUniform()    # specify initializer for weights
+        model.add(keras.layers.Dense(24, input_dim=self.state_size, activation='relu', kernel_initializer=init))    # Hidden Layer 1 = 24 nodes, ReLU activation function, He init.
+        model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))   # Hidden Layer 2 = 24 nodes, ReLU activation function, He init.
+        model.add(keras.layers.Dense(self.action_size, activation='linear', kernel_initializer=init))   # Output Layer = (action_size) nodes, linear activation function, He init.
+        model.compile(loss='mse',
+                      optimizer=tf.keras.optimizers.Adam(lr=self.learning_rate))    # Loss = Mean Squared Error Loss, Adam Optimizer with learning rate alpha.
+
+        return model
+
     
     def reset_agent(self):
-        """Resets the q table/agent to its default, untrained state."""
+        """Resets the neural network to its default, untrained state."""
 
-        self.q_table = np.random.rand(2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1)
-        self.number_times_explored = np.full((2*self.x_limit + 1, 2*self.x_limit + 1, 2*self.u_limit + 1, 2*self.u_limit + 1), 0)
-        self.q_table[self.x_limit, self.x_limit, self.u_limit, self.u_limit] = 0
+        self.model = self._build_model()   # reset NN model
+
+    
+    def choose_action(self, state):
+        """Method to get our next action."""
+
+        # Selects random action with prob=epsilon, else action=maxQ (epsilon greedy policy)
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)   # pick random action
+
+        act_values = self.model.predict(state)  # NN makes prediction of Q values for current state
+        return np.argmax(act_values[0])     # pick action that maximizes Q value
 
 
     def run_one_episode_and_train(self):
@@ -74,33 +100,36 @@ class DQN:
 
         # Exploration step - either following the optimal policy, or exploring randomly
         for k in range(1, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
-            if random.uniform(0, 1) < self.epsilon:  # exploring with probability epsilon (epsilon greedy)
-                self.u[k] = random.randint(-self.u_limit, self.u_limit)  # u(k) will be updated with a random value between -u_limit and u_limit (explore)
-            else:
-                # Choose minimum cost action, minimised over all the possible actions (u(k))
-                min_cost_index = np.argmin(self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit)])
-                self.u[k] = min_cost_index - (self.u_limit + 1)  # Does action corresponding to minimum cost
+            selected_action = self.choose_action((self.x[k], self.x[k-1], self.u[k-1]))   # choose best action based on 'current' augmented state, via epsilon greedy algorithm.
+            self.u[k] = selected_action - self.u_limit      # convert argmax of output of NN to the actual action we are taking, with index=0 of NN representing u=-10.
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
             self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
 
-        # Learning step (greedy, off-policy)
+        # Learning step (epsilon greedy, off-policy)
         for k in range(1, self.time_steps):
-            # Grabs current count value for current augmented agent state and action, and increment by 1
-            self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] += 1
-            count = self.number_times_explored[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
 
-            # Normalization constant; the more the current state is explored, the less impact the new q values contribute (discount factor)
-            norm_constant = (1/count)
+            # Calculate reward
+            reward = - (self.x[k]**2 + self.u[k]**2)    # reward is negative cost
 
-            current_q_value = self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)]
-            cost = self.x[k]**2 + self.u[k]**2
-            least_cost_action = min(self.q_table[int(self.x[k+1] + self.x_limit), int(self.x[k] + self.x_limit), int(self.u[k] + self.u_limit)])
+            # Get current augmented state, and associated q-value from output of NN
+            current_state = (self.x[k], self.x[k-1], self.u[k-1])    # get current augmented state
+            current_q_values = self.model.predict(current_state)    # grab the q-values over all possible actions in the current state, outputted by NN.
+            chosen_action_index = self.u[k] + self.u_limit      # convert chosen action to the index corresponding to that action for the output of the NN.
+            
+            # Get next state q-value via output of NN, and corresponding td_target
+            next_state = (self.x[k+1], self.x[k], self.u[k])    # get next augmented state
+            next_q_values = self.model.predict(next_state)[0]    # grab the q-values over all possible actions in the next state, outputted by NN.
+            td_target = (reward + self.gamma * np.amax(next_q_values))     # takes the maximum q-value over all possible actions at the next state -> Temporal difference target
+            
+            # Update outputted q_values (given by NN) at chosen action index with the td_target (Bellman equation) -> i.e create the 'true' labels output vector
+            current_q_values[0][chosen_action_index] = td_target    #(e.g. alpha = 1)
 
-            # Update Q table for the current augmented agent state (containing xk xk-1 uk-1) and current action uk
-            self.q_table[int(self.x[k] + self.x_limit), int(self.x[k-1] + self.x_limit), 
-                         int(self.u[k-1] + self.u_limit), int(self.u[k] + self.u_limit)] = (1-norm_constant) * current_q_value + norm_constant * (cost + least_cost_action)
-    
+            # Train the network -> give it the input to NN (augmented state), and then give it the 'true' label of what output of NN should be, which is current_q_values, which 
+            # has been updated at the 'chosen_action_index' index with the Bellman equation update. (i.e. telling model it should train NN weights such that output should now give the 
+            # Bellman-equation-updated Q-values instead).
+            self.model.fit(current_state, current_q_values, epochs=1, verbose=0)    # train the model
+
 
     def run_one_batch_and_train(self):
         """Runs a single batch, comprising of a number of episodes, training the agent."""
@@ -115,7 +144,7 @@ class DQN:
         # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
         self.x[1] = random.randint(-self.x_limit, self.x_limit)
 
-        for i in range(self.number_of_episodes_per_batch):
+        for _ in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
 
     
@@ -126,8 +155,7 @@ class DQN:
 
         self.cost_per_batch = []
         for i in range(self.number_of_batches):
-            if i > 10:
-                self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
+            self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * i)
             self.run_one_batch_and_train()
 
 
@@ -301,17 +329,18 @@ if __name__ == "__main__":
     # print out the current batch number to terminal, as well as average cost per trajectory
     # and overall average cost.
 
-    # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DQN(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
+    # Fix random seeds
+    RANDOM_SEED = 1000
+    tf.random.set_seed(RANDOM_SEED)
+    random.seed(RANDOM_SEED)
 
-    # Fix random seed
-    random.seed(1000)
+    # Initialize the number of batches and episodes per batch variables (for training)
+    agent = DQN(number_of_episodes_per_batch=100, number_of_batches=100000)  # (1) X = number of batches until convergence
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
     # Basically shows the trajectory plot as it is training.
     agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
-    plt.pause(5)  # Pause the final plot for 5 seconds
-    print(np.count_nonzero(agent.number_times_explored)/np.size(agent.number_times_explored))  # fraction of q table that has been touched
+    plt.pause(100)  # Pause the final plot for 100 seconds
     agent.reset_agent()  # Reset agent
 
     # Option 2: Trains the agent, and plots the cost graph every batch_number_until_plot batches.
