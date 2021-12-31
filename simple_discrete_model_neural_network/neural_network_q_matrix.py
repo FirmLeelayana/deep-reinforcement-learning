@@ -112,8 +112,8 @@ class DQN:
         # Learning step (epsilon greedy, off-policy)
         for k in range(1, self.time_steps):
 
-            # Calculate reward
-            reward = - (self.x[k]**2 + self.u[k]**2)    # reward is negative cost
+            # Calculate reward (divided by 10 to reduce magnitude of update)
+            reward = - (self.x[k]**2 + self.u[k]**2) / 10   # reward is negative cost
 
             # Get current augmented state, and associated q-value from output of NN
             current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])   # get current augmented state
