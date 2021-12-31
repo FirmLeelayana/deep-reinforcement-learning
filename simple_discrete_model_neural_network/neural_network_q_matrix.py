@@ -139,20 +139,21 @@ class DQN:
     def run_one_batch_and_train(self):
         """Runs a single batch, comprising of a number of episodes, training the agent."""
 
-        self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value (failure mode)
-        self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value
-
-        self.u = np.zeros(self.time_steps)
-        self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
-
-        # Selects a number randomly between -x_limit and x_limit, and places it in x[0] and u[0].
-        self.x[0] = random.randint(-self.x_limit, self.x_limit)
-        self.u[0] = random.randint(-self.u_limit, self.u_limit)
-        
-        # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
-        self.x[1] = min(max(self.a * self.x[0] + self.b * self.u[0], -self.x_limit), self.x_limit)
-
         for _ in range(self.number_of_episodes_per_batch):
+            
+            self.b = random.choice(self.possible_b_vector)  # Randomly selects the B value (failure mode)
+            self.a = random.choice(self.possible_a_vector)  # Randomly selects the A value
+
+            self.u = np.zeros(self.time_steps)
+            self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
+
+            # Selects a number randomly between -x_limit and x_limit, and places it in x[0] and u[0].
+            self.x[0] = random.randint(-self.x_limit, self.x_limit)
+            self.u[0] = random.randint(-self.u_limit, self.u_limit)
+            
+            # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
+            self.x[1] = min(max(self.a * self.x[0] + self.b * self.u[0], -self.x_limit), self.x_limit)
+
             self.run_one_episode_and_train()
 
     
@@ -344,6 +345,7 @@ if __name__ == "__main__":
     # Fix random seeds
     RANDOM_SEED = 1000
     tf.random.set_seed(RANDOM_SEED)
+    np.random.seed(RANDOM_SEED)
     random.seed(RANDOM_SEED)
 
     # Initialize the number of batches and episodes per batch variables (for training)
