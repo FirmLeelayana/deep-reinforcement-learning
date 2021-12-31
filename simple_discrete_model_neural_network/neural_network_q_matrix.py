@@ -56,6 +56,7 @@ class DQN:
                  self.memory = deque(maxlen=2000)   # Experience replay buffer, to sample from
                  self.gamma = 0.95    # discount rate
                  self.epsilon = 1.0  # exploration rate (initial)
+                 self.epsilon_max = 1.0     # maximum epsilon value
                  self.epsilon_min = 0.01    # minimum epsilon value
                  self.epsilon_decay = 0.01     # decay for our epsilon initial value as we run episodes
                  self.learning_rate = 0.001     # learning rate, alpha
@@ -67,7 +68,7 @@ class DQN:
 
         model = keras.Sequential()  # simple sequential neural network, with 3 fully/densely connected layers
         init = tf.keras.initializers.HeUniform()    # specify initializer for weights
-        model.add(keras.layers.Dense(24, input_dim=self.state_size, activation='relu', kernel_initializer=init))    # Hidden Layer 1 = 24 nodes, ReLU activation function, He init.
+        model.add(keras.layers.Dense(24, input_shape=(self.state_size,), activation='relu', kernel_initializer=init))    # Hidden Layer 1 = 24 nodes, ReLU activation function, He init.
         model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))   # Hidden Layer 2 = 24 nodes, ReLU activation function, He init.
         model.add(keras.layers.Dense(self.action_size, activation='linear', kernel_initializer=init))   # Output Layer = (action_size) nodes, linear activation function, He init.
         model.compile(loss='mse',
@@ -100,7 +101,9 @@ class DQN:
 
         # Exploration step - either following the optimal policy, or exploring randomly
         for k in range(1, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
-            selected_action = self.choose_action((self.x[k], self.x[k-1], self.u[k-1]))   # choose best action based on 'current' augmented state, via epsilon greedy algorithm.
+            current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])
+            current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+            selected_action = self.choose_action(current_state)   # choose best action based on 'current' augmented state, via epsilon greedy algorithm.
             self.u[k] = selected_action - self.u_limit      # convert argmax of output of NN to the actual action we are taking, with index=0 of NN representing u=-10.
 
             # Basically limits x to x_limit and -x_limit for next state, and updates next state
@@ -113,12 +116,14 @@ class DQN:
             reward = - (self.x[k]**2 + self.u[k]**2)    # reward is negative cost
 
             # Get current augmented state, and associated q-value from output of NN
-            current_state = (self.x[k], self.x[k-1], self.u[k-1])    # get current augmented state
+            current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])   # get current augmented state
+            current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
             current_q_values = self.model.predict(current_state)    # grab the q-values over all possible actions in the current state, outputted by NN.
-            chosen_action_index = self.u[k] + self.u_limit      # convert chosen action to the index corresponding to that action for the output of the NN.
+            chosen_action_index = int(self.u[k] + self.u_limit)      # convert chosen action to the index corresponding to that action for the output of the NN.
             
             # Get next state q-value via output of NN, and corresponding td_target
-            next_state = (self.x[k+1], self.x[k], self.u[k])    # get next augmented state
+            next_state = np.array([self.x[k+1], self.x[k], self.u[k]])   # get next augmented state
+            next_state = next_state.reshape(-1, self.state_size)  # reshape to correct size
             next_q_values = self.model.predict(next_state)[0]    # grab the q-values over all possible actions in the next state, outputted by NN.
             td_target = (reward + self.gamma * np.amax(next_q_values))     # takes the maximum q-value over all possible actions at the next state -> Temporal difference target
             
@@ -140,9 +145,12 @@ class DQN:
         self.u = np.zeros(self.time_steps)
         self.x = np.zeros(self.time_steps + 1)  # As we need to index x[k+1] for the last time step as well
 
-        # Selects a number randomly between -x_limit and x_limit, and places it in x[1].
+        # Selects a number randomly between -x_limit and x_limit, and places it in x[0] and u[0].
+        self.x[0] = random.randint(-self.x_limit, self.x_limit)
+        self.u[0] = random.randint(-self.u_limit, self.u_limit)
+        
         # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
-        self.x[1] = random.randint(-self.x_limit, self.x_limit)
+        self.x[1] = min(max(self.a * self.x[0] + self.b * self.u[0], -self.x_limit), self.x_limit)
 
         for _ in range(self.number_of_episodes_per_batch):
             self.run_one_episode_and_train()
@@ -208,9 +216,12 @@ class DQN:
                 u_values[0] = 0
 
                 for k in range(1, self.time_steps):
-                    # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
-                    u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
+                    # Choose max q-value action, minimised over all the possible actions (u(k))
+                    current_state = np.array([x_values[k], x_values[k-1], u_values[k-1]])   # get current augmented state
+                    current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+                    current_q_values = self.model.predict(current_state)[0]    # grab the q-values over all possible actions in the current state, outputted by NN.
+                    max_q_index = np.argmax(current_q_values)
+                    u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
                     cost_matrix[combination_index][k] = x_values[k]**2 + u_values[k]**2
@@ -237,8 +248,7 @@ class DQN:
 
         self.cost_per_batch = []
         for i in range(self.number_of_batches):
-            if i > 10:
-                self.epsilon = 0.5  # switches to epsilon greedy policy, we want it to explore alot
+            self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * i)
             self.run_one_batch_and_train()
 
             # Record cost per batch
@@ -277,9 +287,12 @@ class DQN:
                 u_values[0] = 0
 
                 for k in range(1, self.time_steps):
-                    # Choose minimum cost action, minimised over all the possible actions (u(k))
-                    min_cost_index = np.argmin(self.q_table[int(x_values[k] + self.x_limit), int(x_values[k-1] + self.x_limit), int(u_values[k-1] + self.u_limit)])
-                    u_values[k] = min_cost_index - (self.u_limit)  # Does action corresponding to minimum cost
+                    # Choose max q-value action, minimised over all the possible actions (u(k))
+                    current_state = np.array([x_values[k], x_values[k-1], u_values[k-1]])   # get current augmented state
+                    current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+                    current_q_values = self.model.predict(current_state)[0]    # grab the q-values over all possible actions in the current state, outputted by NN.
+                    max_q_index = np.argmax(current_q_values)
+                    u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
                     self.cost[combination_index][k] = x_values[k]**2 + u_values[k]**2
@@ -312,8 +325,7 @@ class DQN:
         """
 
         for i in range(self.number_of_batches):
-            if i > 10:
-                self.epsilon = 0.5  # switches to epsilon greedy policy, want it to explore alot
+            self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * i)
             self.run_one_batch_and_train()
 
             # Create a plot for every x batches
@@ -335,11 +347,11 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DQN(number_of_episodes_per_batch=100, number_of_batches=100000)  # (1) X = number of batches until convergence
+    agent = DQN(number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.
     # Basically shows the trajectory plot as it is training.
-    agent.run_multiple_batches_and_plot(batch_number_until_plot=10, option = 'trajectory')
+    agent.run_multiple_batches_and_plot(batch_number_until_plot=1, option = 'trajectory')
     plt.pause(100)  # Pause the final plot for 100 seconds
     agent.reset_agent()  # Reset agent
 
