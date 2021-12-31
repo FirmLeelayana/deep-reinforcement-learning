@@ -61,7 +61,7 @@ class DQN:
                  self.epsilon_decay = 0.01     # decay for our epsilon initial value as we run episodes
                  self.learning_rate = 0.001     # learning rate, alpha
                  self.model = self._build_model()   # create our neural network model
-    
+
 
     def _build_model(self):
         """Creates our neural network model architecture."""
