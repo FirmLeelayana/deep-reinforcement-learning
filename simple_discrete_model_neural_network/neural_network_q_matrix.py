@@ -72,7 +72,7 @@ class DQN:
         model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))   # Hidden Layer 2 = 24 nodes, ReLU activation function, He init.
         model.add(keras.layers.Dense(self.action_size, activation='linear', kernel_initializer=init))   # Output Layer = (action_size) nodes, linear activation function, He init.
         model.compile(loss='mse',
-                      optimizer=tf.keras.optimizers.Adam(lr=self.learning_rate))    # Loss = Mean Squared Error Loss, Adam Optimizer with learning rate alpha.
+                      optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate))    # Loss = Mean Squared Error Loss, Adam Optimizer with learning rate alpha.
 
         return model
 
@@ -86,12 +86,14 @@ class DQN:
     def choose_action(self, state):
         """Method to get our next action."""
 
-        # Selects random action with prob=epsilon, else action=maxQ (epsilon greedy policy)
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)   # pick random action
+        with tf.device('/device:GPU:0'):
 
-        act_values = self.model.predict(state)  # NN makes prediction of Q values for current state
-        return np.argmax(act_values[0])     # pick action that maximizes Q value
+            # Selects random action with prob=epsilon, else action=maxQ (epsilon greedy policy)
+            if np.random.rand() <= self.epsilon:
+                return random.randrange(self.action_size)   # pick random action (0 to 20 in this case)
+
+            act_values = self.model.predict(state)  # NN makes prediction of Q values for current state
+            return np.argmax(act_values[0])     # pick action that maximizes Q value
 
 
     def run_one_episode_and_train(self):
@@ -99,41 +101,43 @@ class DQN:
         Trains the agent over a single episode.
         """
 
-        # Exploration step - either following the optimal policy, or exploring randomly
-        for k in range(1, self.time_steps):  # going through the time steps from k=2 onwards (as we need to initialize at k=0)
-            current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])
-            current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
-            selected_action = self.choose_action(current_state)   # choose best action based on 'current' augmented state, via epsilon greedy algorithm.
-            self.u[k] = selected_action - self.u_limit      # convert argmax of output of NN to the actual action we are taking, with index=0 of NN representing u=-10.
+        with tf.device('/device:GPU:0'):
 
-            # Basically limits x to x_limit and -x_limit for next state, and updates next state
-            self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
+            # Exploration step - either following the optimal policy, or exploring randomly
+            for k in range(1, self.time_steps):  # going through the time steps from k=1 onwards (as we need to initialize at k=0)
+                current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])
+                current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+                selected_action = self.choose_action(current_state)   # choose best action based on 'current' augmented state, via epsilon greedy algorithm.
+                self.u[k] = selected_action - self.u_limit      # convert argmax of output of NN to the actual action we are taking, with index=0 of NN representing u=-10.
 
-        # Learning step (epsilon greedy, off-policy)
-        for k in range(1, self.time_steps):
+                # Basically limits x to x_limit and -x_limit for next state, and updates next state
+                self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
 
-            # Calculate reward (divided by 10 to reduce magnitude of update)
-            reward = - (self.x[k]**2 + self.u[k]**2) / 10   # reward is negative cost
+            # Learning step (epsilon greedy, off-policy)
+            for k in range(1, self.time_steps):
 
-            # Get current augmented state, and associated q-value from output of NN
-            current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])   # get current augmented state
-            current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
-            current_q_values = self.model.predict(current_state)    # grab the q-values over all possible actions in the current state, outputted by NN.
-            chosen_action_index = int(self.u[k] + self.u_limit)      # convert chosen action to the index corresponding to that action for the output of the NN.
-            
-            # Get next state q-value via output of NN, and corresponding td_target
-            next_state = np.array([self.x[k+1], self.x[k], self.u[k]])   # get next augmented state
-            next_state = next_state.reshape(-1, self.state_size)  # reshape to correct size
-            next_q_values = self.model.predict(next_state)[0]    # grab the q-values over all possible actions in the next state, outputted by NN.
-            td_target = (reward + self.gamma * np.amax(next_q_values))     # takes the maximum q-value over all possible actions at the next state -> Temporal difference target
-            
-            # Update outputted q_values (given by NN) at chosen action index with the td_target (Bellman equation) -> i.e create the 'true' labels output vector
-            current_q_values[0][chosen_action_index] = td_target    #(e.g. alpha = 1)
+                # Calculate reward
+                reward = - (self.x[k]**2 + self.u[k]**2)   # reward is negative cost
 
-            # Train the network -> give it the input to NN (augmented state), and then give it the 'true' label of what output of NN should be, which is current_q_values, which 
-            # has been updated at the 'chosen_action_index' index with the Bellman equation update. (i.e. telling model it should train NN weights such that output should now give the 
-            # Bellman-equation-updated Q-values instead).
-            self.model.fit(current_state, current_q_values, epochs=1, verbose=0)    # train the model
+                # Get current augmented state, and associated q-value from output of NN
+                current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])   # get current augmented state
+                current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+                current_q_values = self.model.predict(current_state)    # grab the q-values over all possible actions in the current state, outputted by NN.
+                chosen_action_index = int(self.u[k] + self.u_limit)      # convert chosen action to the index corresponding to that action for the output of the NN.
+                
+                # Get next state q-value via output of NN, and corresponding td_target
+                next_state = np.array([self.x[k+1], self.x[k], self.u[k]])   # get next augmented state
+                next_state = next_state.reshape(-1, self.state_size)  # reshape to correct size
+                next_q_values = self.model.predict(next_state)[0]    # grab the q-values over all possible actions in the next state, outputted by NN.
+                td_target = (reward + self.gamma * np.amax(next_q_values))     # takes the maximum q-value over all possible actions at the next state -> Temporal difference target
+                
+                # Update outputted q_values (given by NN) at chosen action index with the td_target (Bellman equation) -> i.e create the 'true' labels output vector
+                current_q_values[0][chosen_action_index] = td_target    #(e.g. alpha = 1)
+
+                # Train the network -> give it the input to NN (augmented state), and then give it the 'true' label of what output of NN should be, which is current_q_values, which 
+                # has been updated at the 'chosen_action_index' index with the Bellman equation update. (i.e. telling model it should train NN weights such that output should now give the 
+                # Bellman-equation-updated Q-values instead).
+                self.model.fit(current_state, current_q_values, epochs=1, verbose=0)    # train the model
 
 
     def run_one_batch_and_train(self):
@@ -163,7 +167,7 @@ class DQN:
         """
 
         self.cost_per_batch = []
-        for i in range(self.number_of_batches):
+        for i in range(self.number_of_batches): # Epsilon decays corresponding to number of batches -> at 400 batches decays to min value.
             self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * i)
             self.run_one_batch_and_train()
 
@@ -263,60 +267,62 @@ class DQN:
 
         option = string, represents which plot we want to see.
         """
+
+        with tf.device('/device:GPU:0'):
         
-        a_vector = self.possible_a_vector.copy()
-        a_vector.extend(self.unseen_a_vector)
-        a_vector.sort()
+            a_vector = self.possible_a_vector.copy()
+            a_vector.extend(self.unseen_a_vector)
+            a_vector.sort()
 
-        # Initialize cost matrix for each possible combination at each time step
-        total_number_combinations = len(a_vector) * len(self.possible_b_vector)
-        self.cost = np.zeros((total_number_combinations, self.time_steps))
-        combination_index = 0  # represents current combination index
-        
-        # Initialize x and u vectors over the time steps
-        x_values = np.zeros(self.time_steps + 1)
-        u_values = np.zeros(self.time_steps)
+            # Initialize cost matrix for each possible combination at each time step
+            total_number_combinations = len(a_vector) * len(self.possible_b_vector)
+            self.cost = np.zeros((total_number_combinations, self.time_steps))
+            combination_index = 0  # represents current combination index
+            
+            # Initialize x and u vectors over the time steps
+            x_values = np.zeros(self.time_steps + 1)
+            u_values = np.zeros(self.time_steps)
 
-        plt.clf()  # clears the current figure
+            plt.clf()  # clears the current figure
 
-        # Iterating over ALL possible combinations of a and b values.
-        for b in self.possible_b_vector:
-            for a in a_vector:
-                # Initializing x and u values.
-                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
-                x_values[0] = 0
-                u_values[0] = 0
+            # Iterating over ALL possible combinations of a and b values.
+            for b in self.possible_b_vector:
+                for a in a_vector:
+                    # Initializing x and u values.
+                    x_values[1] = self.x_limit / 5  # testing agent on a step impulse
+                    x_values[0] = 0
+                    u_values[0] = 0
 
-                for k in range(1, self.time_steps):
-                    # Choose max q-value action, minimised over all the possible actions (u(k))
-                    current_state = np.array([x_values[k], x_values[k-1], u_values[k-1]])   # get current augmented state
-                    current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
-                    current_q_values = self.model.predict(current_state)[0]    # grab the q-values over all possible actions in the current state, outputted by NN.
-                    max_q_index = np.argmax(current_q_values)
-                    u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
+                    for k in range(1, self.time_steps):
+                        # Choose max q-value action, minimised over all the possible actions (u(k))
+                        current_state = np.array([x_values[k], x_values[k-1], u_values[k-1]])   # get current augmented state
+                        current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
+                        current_q_values = self.model.predict(current_state)[0]    # grab the q-values over all possible actions in the current state, outputted by NN.
+                        max_q_index = np.argmax(current_q_values)
+                        u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
 
-                    # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
-                    self.cost[combination_index][k] = x_values[k]**2 + u_values[k]**2
+                        # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
+                        self.cost[combination_index][k] = x_values[k]**2 + u_values[k]**2
 
-                    # Basically limits x to x_limit and -x_limit for next state, and updates next state
-                    x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+                        # Basically limits x to x_limit and -x_limit for next state, and updates next state
+                        x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
 
-                # Plots either trajectory or error over time steps
-                if option == "trajectory":
-                    plt.plot(range(self.time_steps + 1), x_values, label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
-                elif option == "cost":
-                    plt.plot(range(self.time_steps), self.cost[combination_index], label=f'a = {a}, b = {b}')  # plot the cost for the trajectory
-                
-                # Increment combination index by 1
-                combination_index += 1
+                    # Plots either trajectory or error over time steps
+                    if option == "trajectory":
+                        plt.plot(range(self.time_steps + 1), x_values, label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
+                    elif option == "cost":
+                        plt.plot(range(self.time_steps), self.cost[combination_index], label=f'a = {a}, b = {b}')  # plot the cost for the trajectory
+                    
+                    # Increment combination index by 1
+                    combination_index += 1
 
-        plt.legend(loc="upper left")  # add a legend
-        plt.title(f"{option} plots of a single test episode")
-        plt.xlabel("Time steps")
-        plt.ylabel(f"{option}")
-        plt.ion()  # turn on interactive mode
-        plt.pause(0.01)  # allow time for GUI to load
-        plt.show()
+            plt.legend(loc="upper left")  # add a legend
+            plt.title(f"{option} plots of a single test episode")
+            plt.xlabel("Time steps")
+            plt.ylabel(f"{option}")
+            plt.ion()  # turn on interactive mode
+            plt.pause(0.01)  # allow time for GUI to load
+            plt.show()
         
 
     def run_multiple_batches_and_plot(self, batch_number_until_plot=100, option='trajectory'):
@@ -333,7 +339,7 @@ class DQN:
             if i % batch_number_until_plot == 0:
                 self.plot_test_episode(option)
                 # Print batch number and cost vector (over all combinations)
-                print(f"Current batch number: {i}, average cost per trajectory of {self.cost.mean(axis=1)}, overall average cost: {self.cost.mean()}")
+                print(f"Current batch number: {i}, average cost per trajectory of {self.cost.mean(axis=1)}, overall average cost: {self.cost.mean()}, epsilon: {self.epsilon}")
 
 
 if __name__ == "__main__":
