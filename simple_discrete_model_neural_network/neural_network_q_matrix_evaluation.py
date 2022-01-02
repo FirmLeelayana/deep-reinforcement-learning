@@ -59,17 +59,17 @@ def main_qualitative():
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='overall')
+    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='overall')
 
-    # Produce plots on a single test epsiode, which contains samples of only the trained-on/seen failure modes
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='seen')
+    # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes
+    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='unseen')
 
-    # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='unseen')
+    # Produce plots on a single test epsiode, which contains samples of only the seen failure modes.
+    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='seen')
 
 
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
 
-    main_quantitative()
-    #main_qualitative()
+    #main_quantitative()
+    main_qualitative()

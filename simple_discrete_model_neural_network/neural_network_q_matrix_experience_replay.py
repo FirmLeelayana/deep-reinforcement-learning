@@ -1,4 +1,5 @@
 # Neural network as a function approximator to the q-matrix, via DQN algorithm.
+# Seems like the best working algorithm as of so far.
 
 import numpy as np
 import random
@@ -32,8 +33,8 @@ class DQN:
     """
 
 
-    def __init__(self, x_limit=10, u_limit = 10, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1,-1], possible_a_vector=[2,-2], 
+    def __init__(self, x_limit=10, u_limit = 3, time_steps=10, epsilon=1, 
+                 possible_b_vector=[1], possible_a_vector=[2, 1], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
                  
@@ -116,20 +117,26 @@ class DQN:
                 self.u[k] = selected_action - self.u_limit      # convert argmax of output of NN to the actual action we are taking, with index=0 of NN representing u=-10.
 
                 # Basically limits x to x_limit and -x_limit for next state, and updates next state
-                self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
+                self.x[k+1] = self.a * self.x[k] + self.b * self.u[k]
 
                 # Calculate reward
-                reward = - (self.x[k+1]**2 + self.u[k]**2)
+                reward = - (self.x[k+1]**2)
 
                 # Get next augmented state
                 next_state = np.array([self.x[k+1], self.x[k], self.u[k]])
                 next_state = next_state.reshape(-1, self.state_size)  # reshape to correct size
 
-                # Check if episode done
-                done = (k == self.time_steps - 1)
+                done = False
+
+                # Check if episode is done
+                if (self.x[k+1] >= self.x_limit) or (k == self.time_steps - 1):
+                    done = True
 
                 # Append to experience replay buffer
                 self.memory.append([current_state, selected_action, reward, next_state, done])  # where selected action = 0 to 20 (is an index)
+
+                if done:
+                    break
 
 
     def train(self):
@@ -173,11 +180,11 @@ class DQN:
 
             # Selects a number randomly between -x_limit and x_limit, and places it in x[0] and u[0].
             # Fixed the initial x[0] u[0] value to be between a smaller range, as to not immediately threshold on the limits.
-            self.x[0] = random.randint(-self.x_limit/5, self.x_limit/5)
-            self.u[0] = random.randint(-self.u_limit/5, self.u_limit/5)
+            self.x[0] = random.randint(-3, 3)
+            self.u[0] = random.randint(-3, 3)
             
             # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
-            self.x[1] = min(max(self.a * self.x[0] + self.b * self.u[0], -self.x_limit), self.x_limit)
+            self.x[1] = self.a * self.x[0] + self.b * self.u[0]
 
             self.run_one_episode_and_append_to_memory() # append to experience replay
         
@@ -230,18 +237,18 @@ class DQN:
         state_matrix = np.zeros((total_number_combinations, self.time_steps))
         combination_index = 0  # represents current combination index
         self.possible_combinations = {}  # initialize (a, b) combination matrix
-        
-        # Initialize x and u vectors over the time steps
-        x_values = np.zeros(self.time_steps + 1)
-        u_values = np.zeros(self.time_steps)
 
         # Iterating over all possible combinations of a and b values.
         for b in self.possible_b_vector:
             for a in a_vector:
+                # Initialize x and u vectors over the time steps
+                x_values = np.zeros(self.time_steps + 1)
+                u_values = np.zeros(self.time_steps)
+
                 # Initializing x and u values.
-                x_values[1] = self.x_limit / 5  # testing agent on a step impulse
-                x_values[0] = 0
-                u_values[0] = 0
+                x_values[0] = 1
+                u_values[0] = 1
+                x_values[1] = a * x_values[0] + b * u_values[0]
 
                 for k in range(1, self.time_steps):
                     # Choose max q-value action, minimised over all the possible actions (u(k))
@@ -252,10 +259,10 @@ class DQN:
                     u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
 
                     # Basically limits x to x_limit and -x_limit for next state, and updates next state
-                    x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+                    x_values[k+1] = a * x_values[k] + b * u_values[k]
 
                     # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
-                    cost_matrix[combination_index][k] = x_values[k+1]**2 + u_values[k]**2
+                    cost_matrix[combination_index][k] = x_values[k+1]**2
 
                     # Stores state at each time step for the particular 'a' and 'b' combination
                     state_matrix[combination_index][k] = x_values[k]
@@ -294,27 +301,27 @@ class DQN:
         with tf.device('/device:GPU:0'):
         
             a_vector = self.possible_a_vector.copy()
-            a_vector.extend(self.unseen_a_vector)
-            a_vector.sort()
+            #a_vector.extend(self.unseen_a_vector)
+            #a_vector.sort()
 
             # Initialize cost matrix for each possible combination at each time step
             total_number_combinations = len(a_vector) * len(self.possible_b_vector)
             self.cost = np.zeros((total_number_combinations, self.time_steps))
             combination_index = 0  # represents current combination index
             
-            # Initialize x and u vectors over the time steps
-            x_values = np.zeros(self.time_steps + 1)
-            u_values = np.zeros(self.time_steps)
-
             plt.clf()  # clears the current figure
 
             # Iterating over ALL possible combinations of a and b values.
             for b in self.possible_b_vector:
                 for a in a_vector:
+                    # Initialize x and u vectors over the time steps
+                    x_values = np.zeros(self.time_steps + 1)
+                    u_values = np.zeros(self.time_steps)
+
                     # Initializing x and u values.
-                    x_values[1] = self.x_limit / 5  # testing agent on a step impulse
-                    x_values[0] = 0
-                    u_values[0] = 0
+                    x_values[0] = 1
+                    u_values[0] = 1
+                    x_values[1] = a * x_values[0] + b * u_values[0]
 
                     for k in range(1, self.time_steps):
                         # Choose max q-value action, minimised over all the possible actions (u(k))
@@ -325,10 +332,10 @@ class DQN:
                         u_values[k] = max_q_index - self.u_limit # Does action corresponding to minimum cost
 
                         # Basically limits x to x_limit and -x_limit for next state, and updates next state
-                        x_values[k+1] = min(max(a * x_values[k] + b * u_values[k], -self.x_limit), self.x_limit)
+                        x_values[k+1] = a * x_values[k] + b * u_values[k]
 
                         # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
-                        self.cost[combination_index][k] = x_values[k+1]**2 + u_values[k]**2
+                        self.cost[combination_index][k] = x_values[k+1]**2
 
                     # Plots either trajectory or error over time steps
                     if option == "trajectory":
@@ -380,7 +387,7 @@ if __name__ == "__main__":
     # Initialize the number of batches and episodes per batch variables (for training)
     agent = DQN(number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
     # Total number of transitions per episode = self.time_steps = 9 ish
-    # Total number of transitions per batch = number_of_episodes_per_batch * self.time_steps = 900 ish
+    # Total number of transitions per batch = number_of_episodes_per_batch * self.time_steps = 90 ish
     # Trains once per batch, with batch_size = 128
     # Repeat over X number of batches until convergence.
 
