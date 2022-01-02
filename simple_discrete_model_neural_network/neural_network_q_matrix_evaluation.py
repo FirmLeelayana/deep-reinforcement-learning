@@ -6,7 +6,7 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
-from neural_network_q_matrix import DQN  # import RL agent class
+from neural_network_q_matrix_original import DQN  # import RL agent class
 from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluationMetrics  # import evaluation class
 
 

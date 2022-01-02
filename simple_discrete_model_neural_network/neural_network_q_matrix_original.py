@@ -160,7 +160,7 @@ class DQN:
 
             self.run_one_episode_and_train()
 
-    
+
     def run_multiple_batches_and_train(self):
         """
         Trains agent over the specified number of batches, each batch consisting of multiple episodes.
