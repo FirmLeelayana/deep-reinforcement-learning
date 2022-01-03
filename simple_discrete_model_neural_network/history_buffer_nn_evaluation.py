@@ -28,7 +28,7 @@ def main_quantitative():
 
     # No. batches until convergence = X
 
-    agent = DQN()  # create agent
+    agent = DQN_history_buffer()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Evaluate metrics on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
