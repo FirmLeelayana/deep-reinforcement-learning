@@ -1,4 +1,4 @@
-# Neural network as a function approximator to the q-matrix, via DQN algorithm.
+# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition.
 # Seems like the best working algorithm as of so far.
 
 import numpy as np

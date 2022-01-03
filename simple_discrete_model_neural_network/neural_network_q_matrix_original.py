@@ -355,7 +355,7 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DQN(number_of_episodes_per_batch=10, number_of_batches=60)  # (1) X = number of batches until convergence
+    agent = DQN(number_of_episodes_per_batch=10, number_of_batches=61)  # (1) X = number of batches until convergence
     # Batch number 60 seems to converge to 5/8 failure modes.
 
     # Option 1: Trains the agent, and plots the trajectory graph every batch_number_until_plot batches.

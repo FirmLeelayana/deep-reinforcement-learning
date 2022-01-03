@@ -1,4 +1,4 @@
-# Neural network as a function approximator to the q-matrix, via DQN algorithm.
+# Neural network as a function approximator to the q-matrix, via DQN algorithm. Target network addition.
 
 import numpy as np
 import random
