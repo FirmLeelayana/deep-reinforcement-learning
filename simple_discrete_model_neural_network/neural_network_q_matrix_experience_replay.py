@@ -34,7 +34,7 @@ class DQN:
 
 
     def __init__(self, x_limit=10, u_limit = 3, time_steps=10, epsilon=1, 
-                 possible_b_vector=[1], possible_a_vector=[2, 1], 
+                 possible_b_vector=[1, -1], possible_a_vector=[2, -2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
                  
@@ -301,8 +301,8 @@ class DQN:
         with tf.device('/device:GPU:0'):
         
             a_vector = self.possible_a_vector.copy()
-            #a_vector.extend(self.unseen_a_vector)
-            #a_vector.sort()
+            a_vector.extend(self.unseen_a_vector)
+            a_vector.sort()
 
             # Initialize cost matrix for each possible combination at each time step
             total_number_combinations = len(a_vector) * len(self.possible_b_vector)
