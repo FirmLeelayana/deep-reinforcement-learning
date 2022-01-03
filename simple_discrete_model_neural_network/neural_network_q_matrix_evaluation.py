@@ -62,10 +62,10 @@ def main_qualitative():
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    #evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='overall')
+    evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='overall')
 
     # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes
-    #evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='unseen')
+    evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='unseen')
 
     # Produce plots on a single test epsiode, which contains samples of only the seen failure modes.
     evaluation.qualitative_evaluation_plots(number_batches=100, episodes_per_batch=10, test_type='seen')
