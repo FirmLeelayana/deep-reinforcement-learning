@@ -8,6 +8,9 @@ sys.path.append(parentdir)
 
 from neural_network_q_matrix_original import DQN  # import RL agent class
 from evaluating_agent_performance.create_evaluation_metrics import CreateEvaluationMetrics  # import evaluation class
+import numpy as np
+import random
+import tensorflow as tf
 
 
 def print_statement(mean_vector, variance_vector):
@@ -59,17 +62,23 @@ def main_qualitative():
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='overall')
+    evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='overall')
 
     # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes
-    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='unseen')
+    evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='unseen')
 
     # Produce plots on a single test epsiode, which contains samples of only the seen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=60, episodes_per_batch=10, test_type='seen')
+    evaluation.qualitative_evaluation_plots(number_batches=61, episodes_per_batch=10, test_type='seen')
 
 
 if __name__ == "__main__":
     # Call main_quantitative or main_qualitative, depending on which type of evaluation we want.
+
+    # Fix random seeds
+    RANDOM_SEED = 1000
+    tf.random.set_seed(RANDOM_SEED)
+    np.random.seed(RANDOM_SEED)
+    random.seed(RANDOM_SEED)
 
     #main_quantitative()
     main_qualitative()
