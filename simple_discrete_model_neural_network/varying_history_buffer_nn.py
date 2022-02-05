@@ -1,4 +1,4 @@
-# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with more history buffer.
+# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with more history buffer (10 time steps in total in this case).
 
 import numpy as np
 import random
