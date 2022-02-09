@@ -1,4 +1,4 @@
-# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with more history buffer (10 time steps in total in this case).
+# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with more history buffer (20 time steps in total in this case).
 
 import numpy as np
 import random
@@ -32,7 +32,7 @@ class DQN_history_buffer:
     """
 
 
-    def __init__(self, x_limit=10, u_limit = 3, time_steps=20, epsilon=1, 
+    def __init__(self, x_limit=10, u_limit = 3, time_steps=30, epsilon=1, 
                  possible_b_vector=[1, -1], possible_a_vector=[1.2, -1.2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
@@ -51,7 +51,7 @@ class DQN_history_buffer:
                  self.cost_per_batch = []
 
                  # Parameters required for creating a NN
-                 self.state_size = 21    # Augmented state
+                 self.state_size = 41    # Augmented state
                  self.action_size = u_limit * 2 + 1     # Action size = the values 'u' can take
                  self.memory = deque(maxlen=1000)   # Experience replay buffer, to sample from
                  self.gamma = 0.95    # discount rate
@@ -109,7 +109,9 @@ class DQN_history_buffer:
             for k in range(2, self.time_steps):  # going through the time steps from k=1 onwards (as we need to initialize at k=0)
                 # Get current state
                 current_state = np.array([self.x[k], self.x[k-1], self.u[k-1], self.x[k-2], self.u[k-2], self.x[k-3], self.u[k-3], self.x[k-4], self.u[k-4], self.x[k-5], self.u[k-5],
-                self.x[k-6], self.u[k-6], self.x[k-7], self.u[k-7], self.x[k-8], self.u[k-8], self.x[k-9], self.u[k-9], self.x[k-10], self.u[k-10]])
+                self.x[k-6], self.u[k-6], self.x[k-7], self.u[k-7], self.x[k-8], self.u[k-8], self.x[k-9], self.u[k-9], self.x[k-10], self.u[k-10],
+                self.x[k-11], self.u[k-11], self.x[k-12], self.u[k-12], self.x[k-13], self.u[k-13], self.x[k-14], self.u[k-14], self.x[k-15], self.u[k-15],
+                self.x[k-16], self.u[k-16], self.x[k-17], self.u[k-17], self.x[k-18], self.u[k-18], self.x[k-19], self.u[k-19], self.x[k-20], self.u[k-20]])
                 current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
 
                 # Get action (index as well as actual action done)
@@ -124,7 +126,9 @@ class DQN_history_buffer:
 
                 # Get next augmented state
                 next_state = np.array([self.x[k+1], self.x[k], self.u[k], self.x[k-1], self.u[k-1], self.x[k-3], self.u[k-3], self.x[k-4], self.u[k-4], self.x[k-5], self.u[k-5],
-                self.x[k-6], self.u[k-6], self.x[k-7], self.u[k-7], self.x[k-8], self.u[k-8], self.x[k-9], self.u[k-9], self.x[k-10], self.u[k-10]])
+                self.x[k-6], self.u[k-6], self.x[k-7], self.u[k-7], self.x[k-8], self.u[k-8], self.x[k-9], self.u[k-9], self.x[k-10], self.u[k-10],
+                self.x[k-11], self.u[k-11], self.x[k-12], self.u[k-12], self.x[k-13], self.u[k-13], self.x[k-14], self.u[k-14], self.x[k-15], self.u[k-15],
+                self.x[k-16], self.u[k-16], self.x[k-17], self.u[k-17], self.x[k-18], self.u[k-18], self.x[k-19], self.u[k-19], self.x[k-20], self.u[k-20]])
                 next_state = next_state.reshape(-1, self.state_size)  # reshape to correct size
 
                 done = False
@@ -192,6 +196,16 @@ class DQN_history_buffer:
             self.u[7] = random.randint(-1, 1)
             self.u[8] = random.randint(-1, 1)
             self.u[9] = random.randint(-1, 1)
+            self.u[10] = random.randint(-1, 1)
+            self.u[11] = random.randint(-1, 1)
+            self.u[12] = random.randint(-1, 1)
+            self.u[13] = random.randint(-1, 1)
+            self.u[14] = random.randint(-1, 1)
+            self.u[15] = random.randint(-1, 1)
+            self.u[16] = random.randint(-1, 1)
+            self.u[17] = random.randint(-1, 1)
+            self.u[18] = random.randint(-1, 1)
+            self.u[19] = random.randint(-1, 1)
             
             # Starts at 1 as you need the previous x and u values as history buffer, to make it a Markovian process.
             self.x[1] = self.a * self.x[0] + self.b * self.u[0]
@@ -204,6 +218,16 @@ class DQN_history_buffer:
             self.x[8] = self.a * self.x[7] + self.b * self.u[7]
             self.x[9] = self.a * self.x[8] + self.b * self.u[8]
             self.x[10] = self.a * self.x[9] + self.b * self.u[9]
+            self.x[11] = self.a * self.x[10] + self.b * self.u[10]
+            self.x[12] = self.a * self.x[11] + self.b * self.u[11]
+            self.x[13] = self.a * self.x[12] + self.b * self.u[12]
+            self.x[14] = self.a * self.x[13] + self.b * self.u[13]
+            self.x[15] = self.a * self.x[14] + self.b * self.u[14]
+            self.x[16] = self.a * self.x[15] + self.b * self.u[15]
+            self.x[17] = self.a * self.x[16] + self.b * self.u[16]
+            self.x[18] = self.a * self.x[17] + self.b * self.u[17]
+            self.x[19] = self.a * self.x[18] + self.b * self.u[18]
+            self.x[20] = self.a * self.x[19] + self.b * self.u[19]
 
             self.run_one_episode_and_append_to_memory() # append to experience replay
         
@@ -351,6 +375,16 @@ class DQN_history_buffer:
                     u_values[7] = 1
                     u_values[8] = 1
                     u_values[9] = 1
+                    u_values[10] = 1
+                    u_values[11] = 1
+                    u_values[12] = 1
+                    u_values[13] = 1
+                    u_values[14] = 1
+                    u_values[15] = 1
+                    u_values[16] = 1
+                    u_values[17] = 1
+                    u_values[18] = 1
+                    u_values[19] = 1
                     x_values[1] = a * x_values[0] + b * u_values[0]
                     x_values[2] = a * x_values[1] + b * u_values[1]
                     x_values[3] = a * x_values[2] + b * u_values[2]
@@ -361,11 +395,23 @@ class DQN_history_buffer:
                     x_values[8] = a * x_values[7] + b * u_values[7]
                     x_values[9] = a * x_values[8] + b * u_values[8]
                     x_values[10] = a * x_values[9] + b * u_values[9]
+                    x_values[11] = a * x_values[10] + b * u_values[10]
+                    x_values[12] = a * x_values[11] + b * u_values[11]
+                    x_values[13] = a * x_values[12] + b * u_values[12]
+                    x_values[14] = a * x_values[13] + b * u_values[13]
+                    x_values[15] = a * x_values[14] + b * u_values[14]
+                    x_values[16] = a * x_values[15] + b * u_values[15]
+                    x_values[17] = a * x_values[16] + b * u_values[16]
+                    x_values[18] = a * x_values[17] + b * u_values[17]
+                    x_values[19] = a * x_values[18] + b * u_values[18]
+                    x_values[20] = a * x_values[19] + b * u_values[19]
 
                     for k in range(2, self.time_steps):
                         # Choose max q-value action, minimised over all the possible actions (u(k))
                         current_state = np.array([x_values[k], x_values[k-1], u_values[k-1], x_values[k-2], u_values[k-2], x_values[k-3], u_values[k-3], x_values[k-4], u_values[k-4], x_values[k-5], u_values[k-5],
-                        x_values[k-6], u_values[k-6], x_values[k-7], u_values[k-7], x_values[k-8], u_values[k-8], x_values[k-9], u_values[k-9], x_values[k-10], u_values[k-10]])
+                        x_values[k-6], u_values[k-6], x_values[k-7], u_values[k-7], x_values[k-8], u_values[k-8], x_values[k-9], u_values[k-9], x_values[k-10], u_values[k-10],
+                        x_values[k-11], u_values[k-11], x_values[k-12], u_values[k-12], x_values[k-13], u_values[k-13], x_values[k-14], u_values[k-14], x_values[k-15], u_values[k-15],
+                        x_values[k-16], u_values[k-16], x_values[k-17], u_values[k-17], x_values[k-18], u_values[k-18], x_values[k-19], u_values[k-19], x_values[k-20], u_values[k-20]])
                         current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
                         current_q_values = self.model.predict(current_state)[0]   # grab the q-values over all possible actions in the current state, outputted by NN.
                         max_q_index = np.argmax(current_q_values)
