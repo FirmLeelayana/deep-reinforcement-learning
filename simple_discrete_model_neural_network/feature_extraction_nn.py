@@ -1,5 +1,5 @@
-# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with an additional NN to act as a 
-# feature extractor to select the most important parts of the input.
+# Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition.
+# With feature extraction.
 
 import numpy as np
 import random
@@ -34,7 +34,7 @@ class DQN:
 
 
     def __init__(self, x_limit=10, u_limit = 3, time_steps=10, epsilon=1, 
-                 possible_b_vector=[-1, 1], possible_a_vector=[-2, 2], 
+                 possible_b_vector=[1, -1], possible_a_vector=[1.2, -1.2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
                  
@@ -70,16 +70,15 @@ class DQN:
 
         model = keras.Sequential()  # simple sequential neural network, with 3 fully/densely connected layers
         init = tf.keras.initializers.HeUniform()    # specify initializer for weights
-
+        
         # Automatic feature extraction via CNN
-        model.add(keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(self.state_size,)))
-        model.add(keras.layers.MaxPooling2D((2, 2)))
-        model.add(keras.layers.Conv2D(64, (3, 3), activation='relu'))
-        model.add(keras.layers.MaxPooling2D((2, 2)))
-        model.add(keras.layers.Conv2D(64, (3, 3), activation='relu'))
-
-        # DQN Neural Network for the Q-matrix
-        model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))    # Hidden Layer 1 = 24 nodes, ReLU activation function, He init.
+        model.add(keras.layers.Dense(12, input_shape=(self.state_size,), activation='relu', kernel_initializer=init))    # Hidden Layer 1 = 24 nodes, ReLU activation function, He init.
+        model.add(keras.layers.Reshape((12, 1)))
+        model.add(keras.layers.Conv1D(32, 3, activation='relu'))
+        model.add(keras.layers.Flatten())
+        
+        # DQN
+        model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))   # Hidden Layer 2 = 24 nodes, ReLU activation function, He init.
         model.add(keras.layers.Dense(24, activation='relu', kernel_initializer=init))   # Hidden Layer 2 = 24 nodes, ReLU activation function, He init.
         model.add(keras.layers.Dense(self.action_size, activation='linear', kernel_initializer=init))   # Output Layer = (action_size) nodes, linear activation function, He init.
         model.compile(loss='mse',
