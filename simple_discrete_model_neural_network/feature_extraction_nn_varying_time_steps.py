@@ -332,6 +332,8 @@ class DQN:
                     x_values[0] = 1
                     u_values[0] = 1
                     u_values[1] = 1
+                    x_values[1] = a * x_values[0] + b * u_values[0]
+                    x_values[2] = a * x_values[1] + b * u_values[1]
 
                     for k in range(2, self.time_steps):
                         # Choose max q-value action, minimised over all the possible actions (u(k))
