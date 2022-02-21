@@ -1,5 +1,5 @@
 # Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition.
-# We are implementing Section [3], where we increased the number of time steps we fed into the DQN, 
+# We are implementing Section [4], where we increased the number of time steps we fed into the DQN as well as putting in an extra feature extraction step, 
 # but this file is version 2, as the previous version implemented it improperly.
 
 # We have also made sure to refactor the code such that it is alot easier to change the time steps given to the model without having

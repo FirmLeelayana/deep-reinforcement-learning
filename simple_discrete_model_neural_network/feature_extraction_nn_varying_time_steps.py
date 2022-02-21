@@ -1,6 +1,8 @@
 # Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition.
 # With feature extraction, and changing number of time steps.
 
+# NOTE: This is the original (wrong) implementation of the file, the results of which can be found in section [4.1] in the document.
+
 import numpy as np
 import random
 import matplotlib.pyplot as plt
