@@ -40,7 +40,7 @@ class DQN_varying_time_steps:
 
 
     def __init__(self, x_limit=10, u_limit = 3, given_time_steps=1, epsilon=1, 
-                 possible_b_vector=[-1, 1], possible_a_vector=[-2, 2], 
+                 possible_b_vector=[1, -1], possible_a_vector=[1.2, -1.2], 
                  number_of_episodes_per_batch=100, number_of_batches=5000,
                  unseen_a_vector=[1, -1]):
                  
