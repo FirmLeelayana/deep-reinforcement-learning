@@ -455,7 +455,7 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DQN_varying_time_steps(given_time_steps=1, number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
+    agent = DQN_varying_time_steps(given_time_steps=20, number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
     # Total number of transitions per episode = self.time_steps = 9 ish
     # Total number of transitions per batch = number_of_episodes_per_batch * self.time_steps = 90 ish
     # Trains once per batch, with batch_size = 128
