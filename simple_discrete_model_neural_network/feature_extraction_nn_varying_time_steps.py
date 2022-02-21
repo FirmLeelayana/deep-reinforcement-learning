@@ -11,14 +11,11 @@ from tensorflow import keras
 class DQN:
     """
     This class implements the DQN algorithm to solve a simple environment model which has the state space equation:
-
     x(k+1) = a * x(k) + b * u(k)
-
     The values of a and b are fixed per episode of a period of time steps, however it is changed randomly throughout the training. The failure mode
     of interest is the b variable, in which this would switch from -1 to 1 for example; this inversion represents the environment switching
     from a nominal mode to a failure mode. The ultimate aim of the q-learning algorithm is to learn an optimal q-table/policy such that
     it would be able to handle any variations in a or b.
-
     Initialization variables:
     x_limit = int, the limit as to which the state value can go up to. Default = 20.
     u_limit = int, the limit as to which the input value can go up to. Default = 20.
@@ -215,7 +212,6 @@ class DQN:
     def simulate_single_test_epsiode(self, test_type='overall'):
         """
         Runs a single test episode, under the current trained policy (the current q table).
-
         Input:
         1. test_type, a string -> corresponds to which combinations of a and b values we want to test the agent on.
                                   overall = all combinations
@@ -304,7 +300,6 @@ class DQN:
         """
         Plots time step against the state value, for the current trained policy.
         Each single test episode will have it's own cost matrix, and it's own trajectory plot for ALL the different combinations (unseen + seen)
-
         option = string, represents which plot we want to see.
         """
 
@@ -332,8 +327,6 @@ class DQN:
                     x_values[0] = 1
                     u_values[0] = 1
                     u_values[1] = 1
-                    x_values[1] = a * x_values[0] + b * u_values[0]
-                    x_values[2] = a * x_values[1] + b * u_values[1]
 
                     for k in range(2, self.time_steps):
                         # Choose max q-value action, minimised over all the possible actions (u(k))
