@@ -1,5 +1,6 @@
 # Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition.
-# With feature extraction.
+# With feature extraction, at 1 time step (the default 3 augmented agent state). So just DQN + experience replay as usual, changed possible_a_vector, and do feature extraction
+# for 1 single time step (so the default algorithm).
 
 import numpy as np
 import random

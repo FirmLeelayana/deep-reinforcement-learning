@@ -5,7 +5,7 @@
 # We have also made sure to refactor the code such that it is alot easier to change the time steps given to the model without having
 # to do lots of copying and pasting, etc.
 
-# NOTE: All we have to do to change the time steps fed into the network is change the given_time_steps variable.
+# NOTE: All we have to do to change the time steps fed into the network is change the given_time_steps variable (=1 for default/initial DQN algorithm).
 
 import numpy as np
 import random
@@ -397,11 +397,11 @@ class DQN_varying_time_steps:
                         x_values[k+1] = a * x_values[k] + b * u_values[k]
 
                         # Calculates and stores cost at each time step for the particular 'a' and 'b' combination
-                        self.cost[combination_index][k] = x_values[k+1]**2
+                        self.cost[combination_index][k] = np.clip(x_values[k+1], -self.x_limit, self.x_limit)**2
 
                     # Plots either trajectory or error over time steps
                     if option == "trajectory":
-                        plt.plot(range(self.time_steps + 1), x_values, label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
+                        plt.plot(range(self.time_steps + 1), np.clip(x_values, -self.x_limit, self.x_limit), label=f'a = {a}, b = {b}')  # plot the given trajectory for a single combination of 'a' and 'b' value
                     elif option == "cost":
                         plt.plot(range(self.time_steps), self.cost[combination_index], label=f'a = {a}, b = {b}')  # plot the cost for the trajectory
                     
@@ -447,7 +447,7 @@ if __name__ == "__main__":
     random.seed(RANDOM_SEED)
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DQN_varying_time_steps(given_time_steps=1, number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
+    agent = DQN_varying_time_steps(given_time_steps=20, number_of_episodes_per_batch=10, number_of_batches=100000)  # (1) X = number of batches until convergence
     # Total number of transitions per episode = self.time_steps = 9 ish
     # Total number of transitions per batch = number_of_episodes_per_batch * self.time_steps = 90 ish
     # Trains once per batch, with batch_size = 128
