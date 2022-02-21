@@ -1,4 +1,6 @@
 # Neural network as a function approximator to the q-matrix, via DQN algorithm. Experience replay addition, with more history buffer (20 time steps in total in this case).
+# NOTE: This is the old version of the file (for DQN with increasing history buffer for section 3), where this file (may have) implemented the increase in time
+# steps wrongly in code. The more sure/updated version is located in varying_history_buffer_nn_ver2.py -> use this for the main findings.
 
 import numpy as np
 import random
@@ -406,7 +408,7 @@ class DQN_history_buffer:
                     x_values[19] = a * x_values[18] + b * u_values[18]
                     x_values[20] = a * x_values[19] + b * u_values[19]
 
-                    for k in range(20, self.time_steps): # NOTE: BEFORE WAS SET AT 2 AND ALL WORKED FINE! -> NOW CHANGED TO 20
+                    for k in range(2, self.time_steps):
                         # Choose max q-value action, minimised over all the possible actions (u(k))
                         current_state = np.array([x_values[k], x_values[k-1], u_values[k-1], x_values[k-2], u_values[k-2], x_values[k-3], u_values[k-3], x_values[k-4], u_values[k-4], x_values[k-5], u_values[k-5],
                         x_values[k-6], u_values[k-6], x_values[k-7], u_values[k-7], x_values[k-8], u_values[k-8], x_values[k-9], u_values[k-9], x_values[k-10], u_values[k-10],
