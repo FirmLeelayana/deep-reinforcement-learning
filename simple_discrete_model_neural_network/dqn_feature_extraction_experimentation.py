@@ -90,6 +90,7 @@ class DQN_varying_time_steps:
         model.add(keras.layers.Reshape((12, 1)))
         model.add(keras.layers.Conv1D(64, kernel_size=5, activation='relu', strides=1))
         model.add(keras.layers.Conv1D(64, kernel_size=5, activation='relu', strides=1))
+        model.add(keras.layers.Conv1D(32, kernel_size=3, activation='relu', strides=1))
         model.add(keras.layers.Dropout(0.5))
         model.add(keras.layers.MaxPooling1D(pool_size=2))
         model.add(keras.layers.Flatten())
