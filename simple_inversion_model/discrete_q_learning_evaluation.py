@@ -53,19 +53,19 @@ def main_quantitative():
 def main_qualitative():
     "Qualitative evaluation metrics"
 
-    # No. batches until convergence = 15000
+    # No. batches until convergence = 37000 (was 15000)
 
     agent = DiscreteQLearning()  # create agent
     evaluation = CreateEvaluationMetrics(agent)  # create evaluation metric, passing in agent
 
     # Produce plots on a single test epsiode, which contains samples of ALL combinations of unseen and seen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='overall')
+    evaluation.qualitative_evaluation_plots(number_batches=37000, episodes_per_batch=100, test_type='overall')
 
     # Produce plots on a single test epsiode, which contains samples of only the trained-on/seen failure modes
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='seen')
+    evaluation.qualitative_evaluation_plots(number_batches=37000, episodes_per_batch=100, test_type='seen')
 
     # Produce plots on a single test epsiode, which contains samples of only the unseen failure modes.
-    evaluation.qualitative_evaluation_plots(number_batches=15000, episodes_per_batch=100, test_type='unseen')
+    evaluation.qualitative_evaluation_plots(number_batches=37000, episodes_per_batch=100, test_type='unseen')
 
 
 if __name__ == "__main__":

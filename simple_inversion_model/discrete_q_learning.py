@@ -304,7 +304,7 @@ if __name__ == "__main__":
     # and overall average cost.
 
     # Initialize the number of batches and episodes per batch variables (for training)
-    agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=15000)  # (1) 15,000 = number of batches until convergence
+    agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=37000)  # (1) 37000 = number of batches until convergence (was 15000)
 
     # Fix random seed
     random.seed(1000)
