@@ -391,6 +391,7 @@ class DQN:
             for k in range(1, self.time_steps):  # going through the time steps from k=1 onwards (as we need to initialize at k=0)
                 # Get current state
                 current_state = np.array([self.x[k], self.x[k-1], self.u[k-1]])
+                current_state = current_state.reshape(-1, self.state_size)  # reshape to correct size
 
                 # Get action (index as well as actual action done)
                 # Choose minimum cost action, minimised over all the possible actions (u(k))
