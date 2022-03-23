@@ -398,7 +398,7 @@ class DQN:
                 self.u[k] = selected_action - (self.u_limit + 1)  # Does action corresponding to minimum cost.
 
                 # Basically limits x to x_limit and -x_limit for next state, and updates next state
-                self.x[k+1] = self.a * self.x[k] + self.b * self.u[k]
+                self.x[k+1] = min(max(self.a * self.x[k] + self.b * self.u[k], -self.x_limit), self.x_limit)
 
                 # Calculate reward
                 reward = - (self.x[k+1]**2)
@@ -655,7 +655,7 @@ class DQN:
 
 if __name__ == "__main__":
     # Initialize the number of batches and episodes per batch variables (for training)
-    q_learning_agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=37000)  # (1) 37000 = number of batches until convergence (was 15000)
+    q_learning_agent = DiscreteQLearning(number_of_episodes_per_batch=100, number_of_batches=13)  # (1) 37000 = number of batches until convergence (was 15000)
 
     # Fix random seed
     random.seed(1000)
