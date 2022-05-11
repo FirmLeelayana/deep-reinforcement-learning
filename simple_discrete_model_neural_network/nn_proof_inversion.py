@@ -301,8 +301,6 @@ class DQN:
         with tf.device('/device:GPU:0'):
         
             a_vector = self.possible_a_vector.copy()
-            a_vector.extend(self.unseen_a_vector)
-            a_vector.sort()
 
             # Initialize cost matrix for each possible combination at each time step
             total_number_combinations = len(a_vector) * len(self.possible_b_vector)
