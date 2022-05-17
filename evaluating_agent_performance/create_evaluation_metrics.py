@@ -6,6 +6,11 @@ import random
 import statistics
 import matplotlib.pyplot as plt
 
+import matplotlib
+font = {'family' : 'normal',
+        'size'   : 16}
+matplotlib.rc('font', **font)
+
 class CreateEvaluationMetrics:
     """
     This class takes in an agent object, and evaluates it's performance, as specified in the 'Evaluating performance for RL algorithms'
