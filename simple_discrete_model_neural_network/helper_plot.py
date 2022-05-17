@@ -3,6 +3,11 @@ import random
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
+import matplotlib
+font = {'family' : 'normal',
+        'size'   : 16}
+matplotlib.rc('font', **font)
+
 possible_a_vector = [1, 2, -1, -2]
 possible_b_vector = [1, -1]
 all_traj = []
