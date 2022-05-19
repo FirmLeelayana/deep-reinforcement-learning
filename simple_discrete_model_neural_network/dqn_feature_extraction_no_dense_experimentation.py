@@ -83,7 +83,7 @@ class DQN_varying_time_steps:
         # Automatic feature extraction (via CNN for example, can explore different architectures as well)
         model.add(keras.layers.Reshape((11, 1)))
         model.add(keras.layers.Conv1D(128, kernel_size=5, activation='relu', strides=1))
-        model.add(keras.layers.Conv1D(64, kernel_size=5, activation='relu', strides=1))
+        model.add(keras.layers.Conv1D(128, kernel_size=5, activation='relu', strides=1))
         model.add(keras.layers.Dropout(0.5))
         model.add(keras.layers.MaxPooling1D(pool_size=2))
         model.add(keras.layers.Flatten())
