@@ -67,7 +67,7 @@ class DQN_varying_time_steps:
                  self.epsilon = 1.0  # exploration rate (initial)
                  self.epsilon_max = 1.0     # maximum epsilon value
                  self.epsilon_min = 0.01    # minimum epsilon value
-                 self.epsilon_decay = 0.04    # decay for our epsilon initial value as we run episodes
+                 self.epsilon_decay = 0.03    # decay for our epsilon initial value as we run episodes
                  self.learning_rate = 0.001     # learning rate, alpha
                  self.batch_size = 128     # batch size for sampling memory replay buffer
                  self.model = self._build_model()   # create our neural network model
